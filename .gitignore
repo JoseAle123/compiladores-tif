@@ -1,0 +1,9 @@
+# Ignorar la carpeta .vscode
+.vscode/
+output/
+# Ignorar todos los archivos .dll
+*.dll
+*.exe
+*.o
+# Ignorar el archivo Makefile
+Makefile
