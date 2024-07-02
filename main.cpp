@@ -1,9 +1,47 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <cmath>
-
+#include <iostream>
 #define PI 3.14159265f
 
+const int gridSize = 8;
+
+const sf::Vector2f pos_origin(300.f,150.f); 
+
+sf::Vector2i calculateGridIndices(const sf::Vector2f& position, float tileX, float tileY, const sf::Vector2f& gridOrigin)
+{
+    // Trasladar la posición a partir del origen de la grilla
+    sf::Vector2f relativePosition = position - gridOrigin;
+
+    float ang_c1 = 60.f*PI/180.f - std::atan2f(std::abs(relativePosition.x),relativePosition.y);
+    float ang_c2 = 120.f*PI/180.f-ang_c1;
+    float distX,distY;
+    //std::cout<<ang_c<<std::endl;
+    float hipo=std::sqrt(relativePosition.x*relativePosition.x + relativePosition.y*relativePosition.y);
+    if (relativePosition.x<=0)
+    {
+        distX= (hipo/sin(60.f*PI/180.f))*sin(ang_c1);
+        distY= (hipo/sin(60.f*PI/180.f))*sin(ang_c2);
+    }else
+    {
+        distY= (hipo/sin(60.f*PI/180.f))*sin(ang_c1);
+        distX= (hipo/sin(60.f*PI/180.f))*sin(ang_c2);
+        
+    }
+    std::cout<<distX<<" "<<distY<<std::endl;
+    std::cout<<tileX<<" "<<tileY<<std::endl;
+    sf::Vector2f transformedPosition(
+        distX / tileX,
+        distY / tileY
+    );
+    std::cout<<std::abs(distX) / tileX<<" "<<std::abs(distY) / tileY<<std::endl;
+    // Calcular los índices
+    int gridX = static_cast<int>(std::floor(transformedPosition.x));
+    int gridY = static_cast<int>(std::floor(transformedPosition.y));
+    
+
+    return sf::Vector2i(gridX, gridY);
+}
 int main()
 {
     // Crear la ventana
@@ -150,10 +188,11 @@ int main()
         {
             // Verificar colisión con bloques
             sf::Vector2f newPosition = targetPosition;
-            int gridX = (newPosition.x - (300.f+(tileSize/cos(45*PI/180.f))*0.5*((animatedSprite.getPosition().y-150.f-(tileSize/cos(45*PI/180.f))*0.25)/((tileSize/cos(45*PI/180.f))*0.5))) - (tileSize/cos(45*PI/180.f)) / 2) / (tileSize/cos(45*PI/180.f)) ;
-
-            int gridY = (newPosition.y - (150.f+(tileSize/cos(45*PI/180.f))*0.25f*((animatedSprite.getPosition().x-300.f-(tileSize/cos(45*PI/180.f))*0.5)/((tileSize/cos(45*PI/180.f))))) - (tileSize/cos(45*PI/180.f))*0.25) / ((tileSize/cos(45*PI/180.f))*0.5);
-
+            int gridX,gridY;
+            sf::Vector2i indices = calculateGridIndices(newPosition,(50.f/cos(45*PI/180.f))*0.5f,(50.f/cos(45*PI/180.f))*0.5f,pos_origin);
+            gridX= indices.x;
+            gridY= indices.y;
+            std::cout<<gridX<<gridY<<std::endl;
             if (gridX >= 0 && gridX < gridSize && gridY >= 0 && gridY < gridSize && matrix[gridX][gridY] != 0)
             {
                 moving = false; // Si hay un bloque en la nueva posición, cancelar el movimiento
@@ -191,6 +230,7 @@ int main()
                     animatedSprite.setPosition(targetPosition);
                     animatedSprite.setTextureRect(frames[currentFrame]);
                 }
+                //std::cout<<animatedSprite.getPosition().x<<" "<<animatedSprite.getPosition().y<<std::endl;
             }
         }
 
@@ -218,7 +258,7 @@ int main()
 
         // Dibujar el sprite animado sin la transformación isométrica
         window.draw(animatedSprite);
-
+        
         window.display();
     }
 
