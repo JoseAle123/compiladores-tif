@@ -161,7 +161,7 @@ int main()
     {
         return -1;
     }
-
+    
     // Crear el sprite de la animación
     Sprite makibot;
     makibot.setTexture(spriteSheet);
@@ -177,8 +177,8 @@ int main()
     // Ajustar la posición inicial del sprite para dibujarse desde la parte inferior
     makibot.setOrigin(12.5f, 50.f);
     makibot.setPosition(300.f, 150.f + yIso/2.f); // Posición inicial del sprite, el centro del primer cuadrado
-    
-
+    // primera aparicion del makibot
+    makibot.setTextureRect(frames[0]);
     // Variables para la animación
     int currentFrame = 0;
     Clock animationClock;
@@ -244,8 +244,8 @@ int main()
             cout<<posXIso<<posYISo<<endl;
             if (!(posXIso >= 0 && posXIso < gridSize && posYISo >= 0 && posYISo < gridSize) || matriz3D[posXIso][posYISo] != 0)
             {
-                moving = false; // Si hay un bloque en la nueva posición, cancelar el movimiento
-                targetPosition = makibot.getPosition(); // Mantener la posición actual
+                moving = false; 
+                targetPosition = makibot.getPosition(); 
             }
             else
             {
