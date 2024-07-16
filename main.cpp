@@ -123,16 +123,12 @@ int main()
     {
         return -1;
     }
-    // Crear el sprite del piso
 
-    Sprite tiles[gridSize][gridSize];
-    for (int i = 0; i < gridSize; ++i)
+    // Cargar la textura del punto final del mapa3D
+    Texture texturaLozaAzul;
+    if (!texturaLozaAzul.loadFromFile("images/loza_azul.png"))
     {
-        for (int j = 0; j < gridSize; ++j)
-        {
-            tiles[i][j].setTexture(texturaPiso);
-            tiles[i][j].setPosition(i * lado, j * lado);
-        }
+        return -1;
     }
 
     // matriz3D para la cantidad de bloques
@@ -144,7 +140,28 @@ int main()
         {0, 0, 0, 2, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 7, 0, 0, 0},
-        {0, 0, 0, 1, 1, 1, 0, 2}};
+        {0, 0, 0, 1, 1, -1, 0, 2}};
+
+
+    // Crear el sprite del piso
+
+    Sprite tiles[gridSize][gridSize];
+    
+    for (int i = 0; i < 8; ++i)
+    {
+        for (int j = 0; j < 8; ++j)
+        {
+            if (matriz3D[i][j] == -1)
+            {
+                tiles[i][j].setTexture(texturaLozaAzul); // Usar texturaLozaAzul para -1
+            }
+            else
+            {
+                tiles[i][j].setTexture(texturaPiso); // Usar texturaPiso para otros valores
+            }
+            tiles[i][j].setPosition(i * lado, j * lado);
+        }
+    }
 
     // Vector de sprites para los bloques
     vector<Sprite> bloques;
@@ -173,6 +190,15 @@ int main()
     makibot2D.setOrigin(makibot2D.getRadius(), makibot2D.getRadius());
     makibot2D.setPosition(507.5f, 407.5f);
 
+
+    // Cargar la textura del punto final del mapa3D
+    Texture texturaLozaAzul2D;
+    if (!texturaLozaAzul2D.loadFromFile("images/loza_azul2d.png"))
+    {
+        return -1;
+    }
+
+
     // matriz2D para la cantidad de bloques
 
     int matriz2D[8][8] = {
@@ -183,20 +209,32 @@ int main()
         {0, 0, 0, 1, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 1, 1, 1, 0, 1}};
+        {0, 0, 0, 1, 1, -1, 0, 1}};
+
     Sprite tiles2d[gridSize][gridSize];
     for (int i = 0; i < gridSize; ++i)
     {
         for (int j = 0; j < gridSize; ++j)
         {
             if (matriz2D[i][j] == 1)
+            {
                 tiles2d[i][j].setTexture(texturaBloque2d);
+            }
+            else if (matriz2D[i][j] == -1)
+            {
+                tiles2d[i][j].setTexture(texturaLozaAzul2D);
+            }
             else
+            {
                 tiles2d[i][j].setTexture(texturaPiso2d);
+            }
 
             tiles2d[i][j].setPosition(500 + i * 15, 400 + j * 15);
         }
     }
+
+
+    
 
     const int frameWidth = 25;
     const int frameHeight = 50;
@@ -290,7 +328,8 @@ int main()
             posYISo = indices.y;
 
             cout << posXIso << posYISo << endl;
-            if (!(posXIso >= 0 && posXIso < gridSize && posYISo >= 0 && posYISo < gridSize) || matriz3D[posXIso][posYISo] != 0)
+            if (!(posXIso >= 0 && posXIso < gridSize && posYISo >= 0 && posYISo < gridSize) ||
+                    (matriz3D[posXIso][posYISo] != 0 && matriz3D[posXIso][posYISo] != -1))
             {
                 moving = false;
                 targetPosition = makibot.getPosition();
