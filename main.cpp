@@ -4,6 +4,7 @@
 #include <iostream>
 #define PI 3.14159265f
 
+using namespace std;
 const int gridSize = 8;
 
 const sf::Vector2f pos_origin(300.f,150.f); 
@@ -13,7 +14,7 @@ sf::Vector2i calculateGridIndices(const sf::Vector2f& position, float tileX, flo
     // Trasladar la posición a partir del origen de la grilla
     sf::Vector2f relativePosition = position - gridOrigin;
 
-    float ang_c1 = 60.f*PI/180.f - std::atan2f(std::abs(relativePosition.x),relativePosition.y);
+    float ang_c1 = 60.f*PI/180.f - atan2f(std::abs(relativePosition.x),relativePosition.y);
     float ang_c2 = 120.f*PI/180.f-ang_c1;
     float distX,distY;
     //std::cout<<ang_c<<std::endl;

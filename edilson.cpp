@@ -42,6 +42,7 @@ void dibujarImagenes(sf::RenderWindow& window, const std::vector<sf::Texture>& t
             std::cerr << "Valor de índice fuera de rango: " << array[i] << std::endl;
         }
     }
+    
     sf::RectangleShape button(sf::Vector2f(30, 30));
     sf::RectangleShape button2(sf::Vector2f(30, 30));
     button.setPosition((offsetX + (0 % 4) * imageWidth) - 40, offsetY + (0 / 4) * imageHeight);
@@ -70,7 +71,7 @@ void dibujarImagenes(sf::RenderWindow& window, const std::vector<sf::Texture>& t
                     }
                 }
                 
-            }
+    }
 
     window.draw(button);
     window.draw(button2);
@@ -93,9 +94,44 @@ void InsertarInstru(int array[], int size, int valor) {
     }
 }
 
-int main() {
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Botones con Imagen Central");
+void scaleOnHover(sf::Sprite& sprite, sf::RenderWindow& window) {
+    if (sprite.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+        sprite.setScale(0.9f, 0.9f);
+    } else {
+        sprite.setScale(0.8f, 0.8f);
+    }
+}
 
+int main() {
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "MakyBot");
+
+    //contador
+    sf::Texture textures[6];
+    for (int i = 0; i < 6; ++i) {
+        if (!textures[i].loadFromFile("images/" + std::to_string(i) + ".png")) {
+            std::cerr << "Error cargando la imagen " << i << ".png" << std::endl;
+            return -1;
+        }
+    }
+
+    sf::Texture incrementTexture;
+    sf::Texture decrementTexture;
+    if (!incrementTexture.loadFromFile("images/imageincrement.png" )|| !decrementTexture.loadFromFile("images/imagendecrement.png")) {
+        std::cerr << "Error cargando la imagen imageincrement.png o decrement" << std::endl;
+        return -1;
+    }
+
+    // imagenes del contador
+    int conty = 485;
+    int counter = 0; //importante
+    sf::Sprite numberSprite(textures[counter]);
+    numberSprite.setPosition(620, conty);
+
+    sf::Sprite incrementButton(incrementTexture);
+    incrementButton.setPosition(620, conty-20); // Encima del contador
+
+    sf::Sprite decrementButton(decrementTexture);
+    decrementButton.setPosition(620, conty+43);
 
     // Cargar texturas
     std::vector<sf::Texture> buttonTexture(5);
@@ -126,17 +162,36 @@ int main() {
     centralSprite.setOrigin(buttonTexture[0].getSize().x / 2.f, buttonTexture[0].getSize().y / 2.f);
 
     std::vector<int> pressedButtons;
-    int mainbot[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
-    int f1bot[4] = {0,0,0,0};
-    bool boolmain = false; bool boolf1 = false;
+    int mainbot[12] = {0,0,0,0,0,0,0,0,0,0,0,0};//importante
+    int f1bot[8] = {0,0,0,0,0,0,0,0};
+    int buclebot[4] = {0,0,0,0};
+
+    bool boolmain = false; bool boolf1 = false; bool boolbucle = false;
     bool clicDerechoPresionado = false; 
 
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed){
                 window.close();
+            }
+            if (event.type == sf::Event::MouseButtonPressed) {
+                if (incrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                    if (counter < 5) {
+                        counter++;
+                        numberSprite.setTexture(textures[counter]);
+                    }
+                }
+
+                if (decrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                    if (counter > 0) {
+                        counter--;
+                        numberSprite.setTexture(textures[counter]);
+                    }
+                }
+            }
         }
+
 
         // Procesar interacción del ratón
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -161,8 +216,12 @@ int main() {
                             imprimirArray(mainbot,12);
                         }
                         if(boolf1){
-                            InsertarInstru(f1bot,4,button.id );
-                            imprimirArray(f1bot,4);
+                            InsertarInstru(f1bot,8,button.id );
+                            imprimirArray(f1bot,8);
+                        }
+                        if(boolbucle){
+                            InsertarInstru(buclebot,4,button.id );
+                            imprimirArray(buclebot,4);
                         }
                         clicDerechoPresionado = false;
                     }
@@ -176,13 +235,20 @@ int main() {
                 }
             }
         }
+        
+        scaleOnHover(incrementButton, window);
+        scaleOnHover(decrementButton, window);
 
         window.clear();
+        window.draw(numberSprite);
+        window.draw(incrementButton);
+        window.draw(decrementButton);
         for (const auto& button : buttons) {
             window.draw(button.sprite);
         }
         dibujarImagenes(window, buttonTexture, mainbot, sizeof(mainbot) / sizeof(mainbot[0]), 720, 100,event, boolmain);
         dibujarImagenes(window, buttonTexture, f1bot, sizeof(f1bot) / sizeof(f1bot[0]), 720, 320,event, boolf1);
+        dibujarImagenes(window, buttonTexture, buclebot, sizeof(buclebot) / sizeof(buclebot[0]), 720, 470,event, boolbucle);
         window.draw(centralSprite);
         
         window.display();
