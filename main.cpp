@@ -47,6 +47,48 @@ Vector2i calculateGridIndices(const Vector2f &position, const Vector2f &gridOrig
     return Vector2i(posXIso, posYISo);
 }
 
+
+
+void moveLeft(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x -= xIso / 2.f;
+    targetPosition.y += yIso / 2.f;
+    miraNE = false;
+    miraNO = false;
+    miraSO = true;
+    miraSE = false;
+    moving = true;
+}
+
+void moveRight(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x += xIso / 2.f;
+    targetPosition.y -= yIso / 2.f;
+    miraNE = true;
+    miraNO = false;
+    miraSO = false;
+    miraSE = false;
+    moving = true;
+}
+
+void moveUp(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x -= xIso / 2.f;
+    targetPosition.y -= yIso / 2.f;
+    miraNE = false;
+    miraNO = true;
+    miraSO = false;
+    miraSE = false;
+    moving = true;
+}
+
+void moveDown(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x += xIso / 2.f;
+    targetPosition.y += yIso / 2.f;
+    miraNE = false;
+    miraNO = false;
+    miraSO = false;
+    miraSE = true;
+    moving = true;
+}
+
 int main()
 {
     // Crear la ventana
@@ -219,43 +261,19 @@ int main()
             {
                 if (event.key.code == Keyboard::Left)
                 {
-                    targetPosition.x -= xIso / 2.f;
-                    targetPosition.y += yIso / 2.f;
-                    miraNE = false;
-                    miraNO = false;
-                    miraSO = true;
-                    miraSE = false;
-                    moving = true;
+                    moveLeft(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
                 }
                 else if (event.key.code == Keyboard::Right)
                 {
-                    targetPosition.x += xIso / 2.f;
-                    targetPosition.y -= yIso / 2.f;
-                    miraNE = true;
-                    miraNO = false;
-                    miraSO = false;
-                    miraSE = false;
-                    moving = true;
+                    moveRight(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
                 }
                 else if (event.key.code == Keyboard::Up)
                 {
-                    targetPosition.x -= xIso / 2.f;
-                    targetPosition.y -= yIso / 2.f;
-                    miraNE = false;
-                    miraNO = true;
-                    miraSO = false;
-                    miraSE = false;
-                    moving = true;
+                    moveUp(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
                 }
                 else if (event.key.code == Keyboard::Down)
                 {
-                    targetPosition.x += xIso / 2.f;
-                    targetPosition.y += yIso / 2.f;
-                    miraNE = false;
-                    miraNO = false;
-                    miraSO = false;
-                    miraSE = true;
-                    moving = true;
+                    moveDown(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
                 }
             }
         }
