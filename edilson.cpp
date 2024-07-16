@@ -23,6 +23,16 @@ void Inicializar(int arr[], int size) {
         arr[i] = 0;
     }
 }
+
+void FIFOdelete(int array[], int& tamano) {
+    for (int i = tamano - 1; i >= 0; --i) {
+        if (array[i] != 0) {
+            array[i] = 0;
+            break; 
+        }
+    }
+}
+
 // Función para dibujar las imágenes en base al array
 void dibujarImagenes(sf::RenderWindow& window, const std::vector<sf::Texture>& texturas, int array[], int tamano, int xx, int yy, sf::Event event , bool &estado ) {
     // Tamaño de cada imagen (asumimos que todas tienen el mismo tamaño)
@@ -42,40 +52,51 @@ void dibujarImagenes(sf::RenderWindow& window, const std::vector<sf::Texture>& t
             std::cerr << "Valor de índice fuera de rango: " << array[i] << std::endl;
         }
     }
+    static int esc = 30;
+    static int esc2 = 30;
     
-    sf::RectangleShape button(sf::Vector2f(30, 30));
-    sf::RectangleShape button2(sf::Vector2f(30, 30));
+    sf::RectangleShape button(sf::Vector2f(esc, esc));
+    sf::RectangleShape button2(sf::Vector2f(esc2, esc2));
     button.setPosition((offsetX + (0 % 4) * imageWidth) - 40, offsetY + (0 / 4) * imageHeight);
     button2.setPosition((offsetX + (0 % 4) * imageWidth) - 40, (offsetY + (0 / 4) * imageHeight) + 40);
-    button.setFillColor(sf::Color::Red);
-    button2.setFillColor(sf::Color::Green);
+    button.setFillColor(!estado ? sf::Color::Red : sf::Color::Red);
+    button2.setFillColor(!estado ? sf::Color::Green : sf::Color::Yellow);
+
+    static bool buttonPressed = false;
+    static bool button2Pressed = false;
     
     if (event.type == sf::Event::MouseButtonPressed) {
-                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                sf::Vector2f mousePosF(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y));
-                if (button.getGlobalBounds().contains(mousePosF)) {
-                    if (button.getFillColor() == sf::Color::Red) {
-                        button.setFillColor(sf::Color::Green);
-                        Inicializar(array,tamano);
-                        estado = false;
-                    } else {
-                        button.setFillColor(sf::Color::Red);
-                    }
-                }
-                if (button2.getGlobalBounds().contains(mousePosF)) {
-                    if (button2.getFillColor() == sf::Color::Green) {
-                        button2.setFillColor(sf::Color::Yellow);
-                        estado = true;
-                    } else {
-                        button2.setFillColor(sf::Color::Green);
-                    }
-                }
-                
+        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        sf::Vector2f mousePosF(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y));
+
+        if (button.getGlobalBounds().contains(mousePosF) && !buttonPressed) {
+            buttonPressed = true;
+            FIFOdelete(array,tamano);
+            button.setFillColor(sf::Color::White);
+            esc = 28;
+        }
+
+        if (button2.getGlobalBounds().contains(mousePosF) && !button2Pressed) {
+            button2Pressed = true;
+            estado = !estado; // Cambia el estado
+            esc2 = 28;
+        }
+    } else if (event.type == sf::Event::MouseButtonReleased) {
+        if(buttonPressed){
+            buttonPressed = false; // Reinicia el estado al soltar el botón
+            esc = 30;
+        }
+        if(button2Pressed){
+            button2Pressed = false; // Reinicia el estado al soltar el botón
+            esc2 = 30;
+        }
+
     }
+
+
 
     window.draw(button);
     window.draw(button2);
-    
 }
 
 struct Button {
@@ -85,7 +106,6 @@ struct Button {
 };
 
 void InsertarInstru(int array[], int size, int valor) {
-    bool encontrado = false;
     for (int i = 0; i < size; ++i) {
         if (array[i] == 0) {
             array[i] = valor;
@@ -134,22 +154,27 @@ int main() {
     decrementButton.setPosition(620, conty+43);
 
     // Cargar texturas
-    std::vector<sf::Texture> buttonTexture(5);
+    std::vector<sf::Texture> buttonTexture(7);
 
     if (!buttonTexture[0].loadFromFile("images/vacio.png") ||
         !buttonTexture[4].loadFromFile("images/f1.png") ||
         !buttonTexture[1].loadFromFile("images/giroleft.png") ||
         !buttonTexture[2].loadFromFile("images/giroright.png") ||
-        !buttonTexture[3].loadFromFile("images/avanzar.png")
+        !buttonTexture[3].loadFromFile("images/avanzar.png") ||
+        !buttonTexture[5].loadFromFile("images/bucle.png") ||
+        !buttonTexture[6].loadFromFile("images/foco.png") 
+
         ) {
         return -1;
     }
 
-    std::vector<Button> buttons(4);
+    std::vector<Button> buttons(6);
     buttons[0] = {sf::Sprite(buttonTexture[4]), 4};
     buttons[1] = {sf::Sprite(buttonTexture[1]), 1};
     buttons[2] = {sf::Sprite(buttonTexture[2]), 2};
     buttons[3] = {sf::Sprite(buttonTexture[3]), 3};
+    buttons[4] = {sf::Sprite(buttonTexture[5]), 5};
+    buttons[5] = {sf::Sprite(buttonTexture[6]), 6};
     
 
     for (size_t i = 0; i < buttons.size(); ++i) {

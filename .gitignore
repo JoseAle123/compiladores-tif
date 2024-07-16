@@ -5,5 +5,7 @@ output/
 *.dll
 *.exe
 *.o
+test
+prueba0.cpp
 # Ignorar el archivo Makefile
 Makefile
