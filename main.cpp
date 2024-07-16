@@ -2,6 +2,9 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+
+#include "mapas.h"
+
 #define PI 3.14159265f
 
 using namespace std;
@@ -89,8 +92,57 @@ void moveDown(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO
     moving = true;
 }
 
+
+void crearSpritesPiso(Sprite tiles[][gridSize], const int matriz3D[][gridSize], Texture& texturaLozaAzul, Texture& texturaPiso) {
+    for (int i = 0; i < gridSize; ++i) {
+        for (int j = 0; j < gridSize; ++j) {
+            if (matriz3D[i][j] == -1) {
+                tiles[i][j].setTexture(texturaLozaAzul);
+            } else {
+                tiles[i][j].setTexture(texturaPiso);
+            }
+            tiles[i][j].setPosition(i * lado, j * lado);
+        }
+    }
+}
+
+// Función para crear los sprites de los bloques
+void crearSpritesBloques(vector<Sprite>& bloques, const int matriz3D[][gridSize], Texture& texturaBloque) {
+    for (int i = 0; i < gridSize; ++i) {
+        for (int j = 0; j < gridSize; ++j) {
+            if (matriz3D[i][j] != 0) {
+                for (int k = 1; k <= matriz3D[i][j]; ++k) {
+                    Sprite bloque(texturaBloque);
+                    bloque.setPosition(i * lado - (8.0f * k), j * lado - (8.0f * k));
+                    bloques.push_back(bloque);
+                }
+            }
+        }
+    }
+}
+
+// Función para crear los sprites en una matriz 2D
+void configurarSprites(sf::Sprite tiles2d[][gridSize], const int matriz2D[][gridSize], sf::Texture& texturaBloque2d, sf::Texture& texturaLozaAzul2D, sf::Texture& texturaPiso2d) {
+    for (int i = 0; i < gridSize; ++i) {
+        for (int j = 0; j < gridSize; ++j) {
+            if (matriz2D[i][j] == 1) {
+                tiles2d[i][j].setTexture(texturaBloque2d);
+            } else if (matriz2D[i][j] == -1) {
+                tiles2d[i][j].setTexture(texturaLozaAzul2D);
+            } else {
+                tiles2d[i][j].setTexture(texturaPiso2d);
+            }
+
+            tiles2d[i][j].setPosition(500 + i * 15, 400 + j * 15);
+        }
+    }
+}
+
+
 int main()
 {
+    int mapaActual = 0; // Índice del mapa actual
+
     // Crear la ventana
     RenderWindow window(VideoMode(1000, 600), "Makibot");
     window.setFramerateLimit(60);
@@ -140,49 +192,21 @@ int main()
         {0, 0, 0, 2, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 7, 0, 0, 0},
-        {0, 0, 0, 1, 1, -1, 0, 2}};
+        {0, 0, 0, 1, 1, -1, 0, -1}};
 
 
     // Crear el sprite del piso
 
     Sprite tiles[gridSize][gridSize];
     
-    for (int i = 0; i < 8; ++i)
-    {
-        for (int j = 0; j < 8; ++j)
-        {
-            if (matriz3D[i][j] == -1)
-            {
-                tiles[i][j].setTexture(texturaLozaAzul); // Usar texturaLozaAzul para -1
-            }
-            else
-            {
-                tiles[i][j].setTexture(texturaPiso); // Usar texturaPiso para otros valores
-            }
-            tiles[i][j].setPosition(i * lado, j * lado);
-        }
-    }
+    crearSpritesPiso(tiles, mapas[mapaActual], texturaLozaAzul, texturaPiso);
 
     // Vector de sprites para los bloques
     vector<Sprite> bloques;
     // Vector para los bloques q se sobreponen al makibot
     vector<Sprite> bloques2;
     // Inicializar los sprites del piso y los bloques
-    for (int i = 0; i < gridSize; ++i)
-    {
-        for (int j = 0; j < gridSize; ++j)
-        {
-            if (matriz3D[i][j] != 0)
-            {
-                for (int k = 1; k <= matriz3D[i][j]; ++k)
-                {
-                    Sprite bloque(texturaBloque);
-                    bloque.setPosition(i * lado - (8.0f * k), j * lado - (8.0f * k));
-                    bloques.push_back(bloque);
-                }
-            }
-        }
-    }
+    crearSpritesBloques(bloques, mapas[mapaActual], texturaBloque);
     // Figura del makibot en 2D
     CircleShape makibot2D;
     makibot2D.setRadius(5.f);
@@ -191,7 +215,7 @@ int main()
     makibot2D.setPosition(507.5f, 407.5f);
 
 
-    // Cargar la textura del punto final del mapa3D
+    // Cargar la textura del punto final del mapa2D
     Texture texturaLozaAzul2D;
     if (!texturaLozaAzul2D.loadFromFile("images/loza_azul2d.png"))
     {
@@ -211,27 +235,10 @@ int main()
         {0, 0, 0, 0, 1, 0, 0, 0},
         {0, 0, 0, 1, 1, -1, 0, 1}};
 
-    Sprite tiles2d[gridSize][gridSize];
-    for (int i = 0; i < gridSize; ++i)
-    {
-        for (int j = 0; j < gridSize; ++j)
-        {
-            if (matriz2D[i][j] == 1)
-            {
-                tiles2d[i][j].setTexture(texturaBloque2d);
-            }
-            else if (matriz2D[i][j] == -1)
-            {
-                tiles2d[i][j].setTexture(texturaLozaAzul2D);
-            }
-            else
-            {
-                tiles2d[i][j].setTexture(texturaPiso2d);
-            }
 
-            tiles2d[i][j].setPosition(500 + i * 15, 400 + j * 15);
-        }
-    }
+    //crear el minimapa en 2d
+    Sprite tiles2d[gridSize][gridSize];
+    configurarSprites(tiles2d, matrices2d[mapaActual], texturaBloque2d, texturaLozaAzul2D, texturaPiso2d);
 
 
     
@@ -316,6 +323,10 @@ int main()
             }
         }
 
+
+        
+
+
         // Actualizar la animación del sprite
         if (moving)
         {
@@ -329,7 +340,7 @@ int main()
 
             cout << posXIso << posYISo << endl;
             if (!(posXIso >= 0 && posXIso < gridSize && posYISo >= 0 && posYISo < gridSize) ||
-                    (matriz3D[posXIso][posYISo] != 0 && matriz3D[posXIso][posYISo] != -1))
+                    (mapas[0][posXIso][posYISo] != 0 && mapas[0][posXIso][posYISo] != -1))
             {
                 moving = false;
                 targetPosition = makibot.getPosition();
@@ -396,7 +407,7 @@ int main()
                     {
                         if (posXIso <= i && posYISo <= j)
                         {
-                            for (int k = 1; k <= matriz3D[i][j]; ++k)
+                            for (int k = 1; k <= mapas[0][i][j]; ++k)
                             {
                                 Sprite bloque(texturaBloque);
                                 bloque.setPosition(i * lado - (8.0f * k), j * lado - (8.0f * k));
