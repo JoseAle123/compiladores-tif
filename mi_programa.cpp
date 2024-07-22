@@ -139,6 +139,70 @@ void configurarSprites(sf::Sprite tiles2d[][gridSize], const int matriz2D[][grid
 }
 
 
+void moveRobot(Sprite& makibot, const Vector2f& targetPosition, Vector2f& currentPosition, float xIso, float yIso)
+{
+    Vector2f movement(0.f, 0.f);
+
+    if (targetPosition.x > currentPosition.x)
+        movement.x = xIso / 2.f / 50.f;
+    else if (targetPosition.x < currentPosition.x)
+        movement.x = -xIso / 2.f / 50.f;
+
+    if (targetPosition.y > currentPosition.y)
+        movement.y = yIso / 2.f / 50.f;
+    else if (targetPosition.y < currentPosition.y)
+        movement.y = -yIso / 2.f / 50.f;
+
+    makibot.move(movement);
+    //currentPosition = makibot.getPosition();  // Actualiza la posición actual después de mover
+}
+
+
+void stopMovement(Sprite& makibot, const Vector2f& targetPosition, const Vector2f& currentPosition, int& currentFrame, bool miraNE, bool miraNO, bool miraSO, bool miraSE, bool& moving, const vector<IntRect>& framesB, const vector<IntRect>& framesF)
+{
+    if (abs(targetPosition.x - currentPosition.x) < 1.f && abs(targetPosition.y - currentPosition.y) < 1.f)
+    {
+        moving = false;
+        currentFrame = 0;
+        makibot.setPosition(targetPosition);
+        if (miraNE || miraNO)
+        {
+            makibot.setTextureRect(framesB[currentFrame]);
+            cout << "arriba" << endl;
+        }
+        else if (miraSE || miraSO)
+        {
+            makibot.setTextureRect(framesF[currentFrame]);
+            cout << "abajo" << endl;
+        }
+    }
+}
+
+
+void updateBlocks(vector<Sprite>& bloques2, const int mapas[][gridSize], int gridSize, const Texture& texturaBloque, float lado, int posXIso, int posYISo)
+{
+    bloques2.clear();
+    for (int i = 0; i < gridSize; ++i)
+    {
+        for (int j = 0; j < gridSize; ++j)
+        {
+            if (posXIso <= i && posYISo <= j)
+            {
+                for (int k = 1; k <= mapas[i][j]; ++k)
+                {
+                    Sprite bloque(texturaBloque);
+                    bloque.setPosition(i * lado - (8.0f * k), j * lado - (8.0f * k));
+                    bloques2.push_back(bloque);
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
 int main()
 {
     int mapaActual = 0; // Índice del mapa actual
@@ -183,16 +247,6 @@ int main()
         return -1;
     }
 
-    // matriz3D para la cantidad de bloques
-    int matriz3D[8][8] = {
-        {0, 2, 2, 0, 0, 0, 0, 0},
-        {0, 0, 2, 0, 0, 0, 0, 0},
-        {1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 3, 0, 0},
-        {0, 0, 0, 2, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 7, 0, 0, 0},
-        {0, 0, 0, 1, 1, -1, 0, -1}};
 
 
     // Crear el sprite del piso
@@ -207,6 +261,8 @@ int main()
     vector<Sprite> bloques2;
     // Inicializar los sprites del piso y los bloques
     crearSpritesBloques(bloques, mapas[mapaActual], texturaBloque);
+
+
     // Figura del makibot en 2D
     CircleShape makibot2D;
     makibot2D.setRadius(5.f);
@@ -222,18 +278,6 @@ int main()
         return -1;
     }
 
-
-    // matriz2D para la cantidad de bloques
-
-    int matriz2D[8][8] = {
-        {0, 1, 1, 0, 0, 0, 0, 0},
-        {0, 0, 1, 0, 0, 0, 0, 0},
-        {1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 1, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 1, 1, -1, 0, 1}};
 
 
     //crear el minimapa en 2d
@@ -339,12 +383,51 @@ int main()
             posYISo = indices.y;
 
             cout << posXIso << posYISo << endl;
+
+            if (mapas[mapaActual][posXIso][posYISo] == -1) {
+                bloques.clear();
+
+                for (int i = 0; i < gridSize; ++i) {
+                    for (int j = 0; j < gridSize; ++j) {
+                        tiles[i][j] = Sprite(); // Reasignar un sprite por defecto
+                    }
+                }
+
+                for (int i = 0; i < gridSize; ++i) {
+                    for (int j = 0; j < gridSize; ++j) {
+                        tiles2d[i][j] = Sprite(); // Reasignar un sprite por defecto
+                    }
+                }
+
+                // Incrementar mapaActual y usar el operador módulo para reiniciar a 0 cuando se alcance el límite
+                mapaActual = (mapaActual + 1) % 5;
+
+                posXIso = 0;
+                posYISo = 0;
+                makibot.setOrigin(12.5f, 50.f);
+                makibot.setPosition(300.f, 150.f + yIso / 2.f);
+
+                // Actualizar targetPosition a la nueva posición inicial
+                targetPosition = makibot.getPosition();
+
+                crearSpritesPiso(tiles, mapas[mapaActual], texturaLozaAzul, texturaPiso);
+                crearSpritesBloques(bloques, mapas[mapaActual], texturaBloque);
+                configurarSprites(tiles2d, matrices2d[mapaActual], texturaBloque2d, texturaLozaAzul2D, texturaPiso2d);
+
+                // Detener movimiento
+                moving = false;
+            }
+
+            
             if (!(posXIso >= 0 && posXIso < gridSize && posYISo >= 0 && posYISo < gridSize) ||
-                    (mapas[0][posXIso][posYISo] != 0 && mapas[0][posXIso][posYISo] != -1))
+                    (mapas[mapaActual][posXIso][posYISo] != 0 && mapas[mapaActual][posXIso][posYISo] != -1))
             {
                 moving = false;
                 targetPosition = makibot.getPosition();
             }
+
+           
+
             else
             {
                 if (animationClock.getElapsedTime().asSeconds() > animationSpeed)
@@ -364,58 +447,18 @@ int main()
                     animationClock.restart();
                 }
 
+                // movimeinto del profesor
                 Vector2f currentPosition = makibot.getPosition();
-                Vector2f movement(0.f, 0.f);
-
-                if (targetPosition.x > currentPosition.x)
-                    movement.x = xIso / 2.f / 50.f;
-                else if (targetPosition.x < currentPosition.x)
-                    movement.x = -xIso / 2.f / 50.f;
-
-                if (targetPosition.y > currentPosition.y)
-                    movement.y = yIso / 2.f / 50.f;
-                else if (targetPosition.y < currentPosition.y)
-                    movement.y = -yIso / 2.f / 50.f;
-
-                makibot.move(movement);
+                moveRobot(makibot, targetPosition, currentPosition, xIso, yIso);
 
                 // Detener el movimiento al alcanzar el objetivo
-                if (abs(targetPosition.x - currentPosition.x) < 1.f && abs(targetPosition.y - currentPosition.y) < 1.f)
-                {
-                    moving = false;
-                    currentFrame = 0;
-                    makibot.setPosition(targetPosition);
-                    if (miraNE || miraNO)
-                    {
-                        makibot.setTextureRect(framesB[currentFrame]);
-                        cout << "arriba" << endl;
-                    }
-                    else if (miraSE || miraSO)
-                    {
-                        makibot.setTextureRect(framesF[currentFrame]);
-                        cout << "abajo" << endl;
-                    }
-                }
+
+                stopMovement(makibot, targetPosition, makibot.getPosition(), currentFrame, miraNE, miraNO, miraSO, miraSE, moving, framesB, framesF);
                 // posicion de makibot2D
                 makibot2D.setPosition(507.5f + 15.f * posXIso, 407.4f + 15.f * posYISo);
 
                 // mapa 2D , se verifica la posicion de los bloques y el makibot
-                bloques2.clear();
-                for (int i = 0; i < gridSize; ++i)
-                {
-                    for (int j = 0; j < gridSize; ++j)
-                    {
-                        if (posXIso <= i && posYISo <= j)
-                        {
-                            for (int k = 1; k <= mapas[0][i][j]; ++k)
-                            {
-                                Sprite bloque(texturaBloque);
-                                bloque.setPosition(i * lado - (8.0f * k), j * lado - (8.0f * k));
-                                bloques2.push_back(bloque);
-                            }
-                        }
-                    }
-                }
+                updateBlocks(bloques2, mapas[mapaActual], gridSize, texturaBloque, lado, posXIso, posYISo);
             }
         }
 
