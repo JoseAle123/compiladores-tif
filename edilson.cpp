@@ -157,24 +157,25 @@ int main() {
     std::vector<sf::Texture> buttonTexture(7);
 
     if (!buttonTexture[0].loadFromFile("images/vacio.png") ||
-        !buttonTexture[4].loadFromFile("images/f1.png") ||
-        !buttonTexture[1].loadFromFile("images/giroleft.png") ||
+        !buttonTexture[5].loadFromFile("images/f1.png") ||
+        !buttonTexture[3].loadFromFile("images/giroleft.png") ||
         !buttonTexture[2].loadFromFile("images/giroright.png") ||
-        !buttonTexture[3].loadFromFile("images/avanzar.png") ||
-        !buttonTexture[5].loadFromFile("images/bucle.png") ||
-        !buttonTexture[6].loadFromFile("images/foco.png") 
+        !buttonTexture[1].loadFromFile("images/avanzar.png") ||
+        !buttonTexture[6].loadFromFile("images/bucle.png") ||
+        !buttonTexture[4].loadFromFile("images/foco.png") 
 
         ) {
         return -1;
     }
 
     std::vector<Button> buttons(6);
-    buttons[0] = {sf::Sprite(buttonTexture[4]), 4};
-    buttons[1] = {sf::Sprite(buttonTexture[1]), 1};
-    buttons[2] = {sf::Sprite(buttonTexture[2]), 2};
+    buttons[0] = {sf::Sprite(buttonTexture[6]), 6};
+    buttons[1] = {sf::Sprite(buttonTexture[5]), 5};
+    buttons[2] = {sf::Sprite(buttonTexture[4]), 4};
     buttons[3] = {sf::Sprite(buttonTexture[3]), 3};
-    buttons[4] = {sf::Sprite(buttonTexture[5]), 5};
-    buttons[5] = {sf::Sprite(buttonTexture[6]), 6};
+    buttons[4] = {sf::Sprite(buttonTexture[2]), 2};
+    buttons[5] = {sf::Sprite(buttonTexture[1]), 1};
+    
     
 
     for (size_t i = 0; i < buttons.size(); ++i) {
