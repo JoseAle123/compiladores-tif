@@ -2,7 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-
+#include <thread> // Para std::this_thread::sleep_for
 #include "mapas.h"
 
 #define PI 3.14159265f
@@ -91,6 +91,7 @@ void moveDown(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO
     miraSE = true;
     moving = true;
 }
+
 
 
 void crearSpritesPiso(Sprite tiles[][gridSize], const int matriz3D[][gridSize], Texture& texturaLozaAzul, Texture& texturaPiso) {
@@ -200,7 +201,48 @@ void updateBlocks(vector<Sprite>& bloques2, const int mapas[][gridSize], int gri
 }
 
 
+struct Estado {
+    bool miraNE;
+    bool miraNO;
+    bool miraSO;
+    bool miraSE;
+};
 
+Estado estados[] = {
+    {false, false, false, true},  // 0: Mira hacia el abajo   
+    {false, false, true, false}, // 1: Mira hacia el izquierda       
+    {false, true, false, false}, // 2: Mira hacia arriba
+    {true, false, false, false} // 3: Mira hacia el derecha
+};
+
+// Función para cambiar la dirección cíclicamente
+void updateDirection(int &contador, int movimiento) {  //moviento es el valor del arreglo 
+    if (movimiento == 1) {                  
+        // Incrementar el contador cíclicamente
+        contador = (contador + 1) % 4;
+    } else if (movimiento == 2) {
+        // Decrementar el contador cíclicamente
+        contador = (contador - 1 + 4) % 4; // +4 para manejar el caso negativo
+    }
+}
+
+// Función para mover el robot
+void move2(Vector2f &targetPosition, bool &moving, const Estado &estado, float xIso, float yIso) {
+    if (estado.miraNE) {
+        targetPosition.x += xIso / 2.f;
+        targetPosition.y -= yIso / 2.f;
+    } else if (estado.miraNO) {
+        targetPosition.x -= xIso / 2.f;
+        targetPosition.y -= yIso / 2.f;
+    } else if (estado.miraSO) {
+        targetPosition.x -= xIso / 2.f;
+        targetPosition.y += yIso / 2.f;
+    } else if (estado.miraSE) {
+        targetPosition.x += xIso / 2.f;
+        targetPosition.y += yIso / 2.f;
+    }
+    moving = true;
+}
 
 
 int main()
@@ -332,40 +374,65 @@ int main()
     bool moving = false;
     Vector2f targetPosition = makibot.getPosition();
 
+
+
+
     bool miraNE = false;
     bool miraNO = false;
     bool miraSO = false;
     bool miraSE = true;
 
+    //int CountMovimiento = 0;
+
+    int contador = 0; // Inicialmente mirando hacia el Sur
+
+    int movimientos[] = {3 , 1, 3 ,3 , 1 ,3 ,2 ,3}; // Array de movimientos
+ 
+    int contadorMovimientos = 0;
+
     // Bucle principal
     while (window.isOpen())
     {
 
-        Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == Event::Closed)
-                window.close();
-            if (event.type == Event::KeyPressed && !moving)
-            {
-                if (event.key.code == Keyboard::Left)
-                {
-                    moveLeft(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
+                //miraNE = estados[contador].miraNE;
+                //miraNO = estados[contador].miraNO;
+                //miraSO = estados[contador].miraSO;
+                //miraSE = estados[contador].miraSE;
+
+            
+                if (contadorMovimientos < sizeof(movimientos) / sizeof(movimientos[0]) && moving == false) {
+                    int movimiento = movimientos[contadorMovimientos];
+                    
+                    if (movimiento == 1 || movimiento == 2) {
+                        // Cambia la dirección cíclicamente
+                        
+                        updateDirection(contador, movimiento);
+                        //std::this_thread::sleep_for(std::chrono::seconds(2));
+                        cout << contador << "----------------------" << endl;
+                        miraNE = estados[contador].miraNE;
+                        miraNO = estados[contador].miraNO;
+                        miraSO = estados[contador].miraSO;
+                        miraSE = estados[contador].miraSE;
+
+                    } else if (movimiento == 3) {
+                        // Mover en la dirección actual
+                        Estado estado;
+                        estado.miraNE = miraNE;
+                        estado.miraNO = miraNO;
+                        estado.miraSO = miraSO;
+                        estado.miraSE = miraSE;
+
+                        move2(targetPosition, moving, estado, xIso, yIso);
+                       
+                    }
+
+                    // Avanzar en el array de movimientos
+                    contadorMovimientos++;
+                    
+                    
                 }
-                else if (event.key.code == Keyboard::Right)
-                {
-                    moveRight(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
-                }
-                else if (event.key.code == Keyboard::Up)
-                {
-                    moveUp(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
-                }
-                else if (event.key.code == Keyboard::Down)
-                {
-                    moveDown(targetPosition, moving, miraNE, miraNO, miraSO, miraSE, xIso, yIso);
-                }
-            }
-        }
+            
+        
 
 
         
