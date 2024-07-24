@@ -247,10 +247,6 @@ int main() {
         buttons[i].sprite.setPosition(WINDOW_WIDTH - buttons[i].sprite.getGlobalBounds().width * (i + 1) - 10 * i, 10);
     }
 
-    sf::Sprite centralSprite;
-    centralSprite.setTexture(buttonTexture[0]);
-    centralSprite.setPosition(WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 2.f);
-    centralSprite.setOrigin(buttonTexture[0].getSize().x / 2.f, buttonTexture[0].getSize().y / 2.f);
 
     std::vector<int> pressedButtons;
     int mainbot[12] = {0,0,0,0,0,0,0,0,0,0,0,0};//importante
@@ -268,12 +264,10 @@ int main() {
             }
             if (event.type == sf::Event::MouseButtonPressed) {
                 if (iniciarButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
-                    counter++;
                     guardarInstrucciones(mainbot, 12,f1bot, 8,buclebot, 4, "instrucciones.txt", counter);
                     lenguajeintermedio = txtConvertstring("instrucciones.txt");
                     analizadorSyx(lenguajeintermedio);
                     cout << lenguajeintermedio << endl;
-                    numberSprite.setTexture(textures[counter]);
                 }
                 if (incrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
                     if (counter < 5) {
@@ -306,7 +300,6 @@ int main() {
                 else if (event.type == sf::Event::MouseButtonPressed) {
                     if (event.mouseButton.button == sf::Mouse::Left) {
                         clicDerechoPresionado = true;
-                        centralSprite.setTexture(*button.sprite.getTexture());
                     }
                 } else if (event.type == sf::Event::MouseButtonReleased) {
                     if (event.mouseButton.button == sf::Mouse::Left && clicDerechoPresionado == true ) {
@@ -350,7 +343,6 @@ int main() {
         dibujarImagenes(window, buttonTexture, mainbot, sizeof(mainbot) / sizeof(mainbot[0]), 720, 100,event, boolmain);
         dibujarImagenes(window, buttonTexture, f1bot, sizeof(f1bot) / sizeof(f1bot[0]), 720, 320,event, boolf1);
         dibujarImagenes(window, buttonTexture, buclebot, sizeof(buclebot) / sizeof(buclebot[0]), 720, 470,event, boolbucle);
-        window.draw(centralSprite);
         
         window.display();
     }
