@@ -1,0 +1,17 @@
+iniciar()
+girarIzquierda;
+girarDerecho;
+avanzar;
+girarIzquierda;
+encender;
+girarIzquierda;
+encender;
+encender;
+girarDerecho;
+avanzar;
+girarDerecho;
+encender;
+girarDerecho;
+avanzar;
+girarDerecho;
+.
