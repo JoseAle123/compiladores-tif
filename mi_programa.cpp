@@ -387,10 +387,10 @@ Estado estados[] = {
 
 // Función para cambiar la dirección cíclicamente
 void updateDirection(int& contador, int movimiento) {  //moviento es el valor del arreglo 
-    if (movimiento == 1) {                  
+    if (movimiento == 2) {                  
         // Incrementar el contador cíclicamente
         contador = (contador + 1) % 4;
-    } else if (movimiento == 2) {
+    } else if (movimiento == 3) {
         // Decrementar el contador cíclicamente
         contador = (contador - 1 + 4) % 4; // +4 para manejar el caso negativo
     }
@@ -648,12 +648,12 @@ int main()
 
     int contador = 0; // Inicialmente mirando hacia el Sur
 
-    int movimientos[] = {1 , 1, 1 ,2 , 1,3,1,1,3 }; // Array de movimientos 1:giro drecha 2:giro izquierda
- 
+    
     int contadorMovimientos = 0;
 
     bool girando = false;
     // Bucle principal
+    bool booliniciar = false;
     while (window.isOpen()) 
     {
                     // Lógica de reproducción de sonido
@@ -683,6 +683,8 @@ int main()
                             lenguajeintermedio = txtConvertstring("instrucciones.txt");
                             analizadorSyx(lenguajeintermedio);
                             cout << lenguajeintermedio << endl;
+                            booliniciar = true;
+                        
                         }
                         if (incrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
                             if (counter < 5) {
@@ -743,40 +745,46 @@ int main()
 
                 }
                 //-------------------------intrucciones-----------------------------------------
-                
-                
-                if (contadorMovimientos < sizeof(movimientos) / sizeof(movimientos[0]) && moving == false && girando == false) {
-                    int movimiento = movimientos[contadorMovimientos];
-                    
-                    if (movimiento == 3 || movimiento == 2) {
-                        // Cambia la dirección cíclicamente
-                        
-                        updateDirection(contador, movimiento);
-                        //std::this_thread::sleep_for(std::chrono::seconds(2));
-                        cout << contador << "----------------------" << endl;
-                        miraNE = estados[contador].miraNE;
-                        miraNO = estados[contador].miraNO;
-                        miraSO = estados[contador].miraSO;
-                        miraSE = estados[contador].miraSE;
-                        girando = true;
+                if(booliniciar){
+                   if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false) {
+                                int movimiento = mainbot[contadorMovimientos];
+                                
+                                if (movimiento == 2 || movimiento == 3) {
+                                    // Cambia la dirección cíclicamente
+                                    
+                                    updateDirection(contador, movimiento);
+                                    //std::this_thread::sleep_for(std::chrono::seconds(2));
+                                    cout << contador << "----------------------" << endl;
+                                    miraNE = estados[contador].miraNE;
+                                    miraNO = estados[contador].miraNO;
+                                    miraSO = estados[contador].miraSO;
+                                    miraSE = estados[contador].miraSE;
+                                    girando = true;
 
-                    } else if (movimiento == 3) {
-                        // Mover en la dirección actual
-                        Estado estado;
-                        estado.miraNE = miraNE;
-                        estado.miraNO = miraNO;
-                        estado.miraSO = miraSO;
-                        estado.miraSE = miraSE;
+                                } else if (movimiento == 1) {
+                                    // Mover en la dirección actual
+                                    Estado estado;
+                                    estado.miraNE = miraNE;
+                                    estado.miraNO = miraNO;
+                                    estado.miraSO = miraSO;
+                                    estado.miraSE = miraSE;
 
-                        move2(targetPosition, moving, estado, xIso, yIso);
-                       
+                                    move2(targetPosition, moving, estado, xIso, yIso);
+                                
+                                } 
+
+                                // Avanzar en el array de movimientos
+                                contadorMovimientos++;
+                            
+                            
                     }
-
-                    // Avanzar en el array de movimientos
-                    contadorMovimientos++;
-                    
-                    
+                    else{
+                        cout << "ll2gue" << endl;
+                        contadorMovimientos = 0;
+                        booliniciar = false;
+                    }
                 }
+        
 
         // Actualizar la animación del sprite
         if (moving) 
