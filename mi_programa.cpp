@@ -228,7 +228,7 @@ Vector2i calculateGridIndices(const Vector2f &position, const Vector2f &gridOrig
     return Vector2i(posXIso, posYISo);
 }
 
-void moveLeft(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+/* void moveLeft(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
     targetPosition.x -= xIso / 2.f;
     targetPosition.y += yIso / 2.f;
     miraNE = false;
@@ -266,7 +266,7 @@ void moveDown(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO
     miraSO = false;
     miraSE = true;
     moving = true;
-}
+} */
 
 void crearSpritesPiso(Sprite tiles[][gridSize], const int matriz3D[][gridSize], Texture& texturaLozaAzul, Texture& texturaPiso) {
     for (int i = 0; i < gridSize; ++i) {
@@ -412,6 +412,44 @@ void move2(Vector2f &targetPosition, bool &moving, const Estado &estado, float x
         targetPosition.y += yIso / 2.f;
     }
     moving = true;
+}
+
+// Función que suma los elementos correspondientes de cuatro arrays
+void Arraytotal(const int* array1, const int* array2, const int* array3, const int* array4, int* resultado, int count) {
+    int tamanio = 12; // Tamaño de `mainbot`
+    int tamanio2 = 8; // Tamaño de `f1bot`
+    int tamanio3 = 4; // Tamaño de `buclebot`
+    int contador = 0;
+    
+    for(int i = 0; i < tamanio; i++) {
+        if(array1[i] == 0) {
+            break;
+        }
+        if(array1[i] == 5) {
+            for(int j = 0; j < tamanio2; j++) {
+                if(array3[j] == 0) {
+                    break;
+                }
+                resultado[contador] = array3[j];
+                contador++;
+            }
+        }
+        else if(array1[i] == 6) {
+            for(int k = 0; k < count; k++) {
+                for(int l = 0; l < tamanio3; l++) {
+                    if(array4[l] == 0) {
+                        break;
+                    }
+                    resultado[contador] = array4[l];
+                    contador++;
+                }
+            }
+        }
+        else {
+            resultado[contador] = array1[i];
+            contador++;
+        }
+    }
 }
 
 
@@ -745,9 +783,14 @@ int main()
 
                 }
                 //-------------------------intrucciones-----------------------------------------
+
+                int array[12 + 8 + (4 * 5)] = {0};
+                Arraytotal(mainbot, mainbot, f1bot, buclebot, array, counter);
+
+
                 if (booliniciar) {
-                    if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false) {
-                        int movimiento = mainbot[contadorMovimientos];
+                    if (contadorMovimientos < sizeof(array) / sizeof(array[0]) && moving == false && girando == false) {
+                        int movimiento = array[contadorMovimientos];
 
                         if (movimiento == 2 || movimiento == 3) {
                             // Cambia la dirección cíclicamente
