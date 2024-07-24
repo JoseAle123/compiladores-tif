@@ -1,4 +1,9 @@
 iniciar()
 girarIzquierda;
 avanzar;
+girarDerecho;
+avanzar;
+girarIzquierda;
+avanzar;
+avanzar;
 .

@@ -745,45 +745,40 @@ int main()
 
                 }
                 //-------------------------intrucciones-----------------------------------------
-                if(booliniciar){
-                   if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false) {
-                                int movimiento = mainbot[contadorMovimientos];
-                                
-                                if (movimiento == 2 || movimiento == 3) {
-                                    // Cambia la dirección cíclicamente
-                                    
-                                    updateDirection(contador, movimiento);
-                                    //std::this_thread::sleep_for(std::chrono::seconds(2));
-                                    cout << contador << "----------------------" << endl;
-                                    miraNE = estados[contador].miraNE;
-                                    miraNO = estados[contador].miraNO;
-                                    miraSO = estados[contador].miraSO;
-                                    miraSE = estados[contador].miraSE;
-                                    girando = true;
+                if (booliniciar) {
+                    if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false) {
+                        int movimiento = mainbot[contadorMovimientos];
 
-                                } else if (movimiento == 1) {
-                                    // Mover en la dirección actual
-                                    Estado estado;
-                                    estado.miraNE = miraNE;
-                                    estado.miraNO = miraNO;
-                                    estado.miraSO = miraSO;
-                                    estado.miraSE = miraSE;
+                        if (movimiento == 2 || movimiento == 3) {
+                            // Cambia la dirección cíclicamente
+                            updateDirection(contador, movimiento);
+                            cout << contador << "----------------------" << endl;
+                            miraNE = estados[contador].miraNE;
+                            miraNO = estados[contador].miraNO;
+                            miraSO = estados[contador].miraSO;
+                            miraSE = estados[contador].miraSE;
+                            girando = true;
 
-                                    move2(targetPosition, moving, estado, xIso, yIso);
-                                
-                                } 
+                        } else if (movimiento == 1) {
+                            // Mover en la dirección actual
+                            Estado estado;
+                            estado.miraNE = miraNE;
+                            estado.miraNO = miraNO;
+                            estado.miraSO = miraSO;
+                            estado.miraSE = miraSE;
 
-                                // Avanzar en el array de movimientos
-                                contadorMovimientos++;
-                            
-                            
-                    }
-                    else{
-                        cout << "ll2gue" << endl;
+                            move2(targetPosition, moving, estado, xIso, yIso);
+                        }
+
+                        // Avanzar en el array de movimientos
+                        contadorMovimientos++;
+                    } else if(!moving && !girando){
+                        cout << "Llegue al final del array de movimientos" << endl;
                         contadorMovimientos = 0;
                         booliniciar = false;
                     }
                 }
+
         
 
         // Actualizar la animación del sprite
