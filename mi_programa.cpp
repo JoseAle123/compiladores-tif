@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -239,11 +240,37 @@ void move2(Vector2f &targetPosition, bool &moving, const Estado &estado, float x
 
 int main()
 {
+
+    std::vector<sf::SoundBuffer> soundBuffers(3);
+    std::vector<sf::Sound> sounds(3);
+
+    // Cargar los archivos de audio
+    if (!soundBuffers[0].loadFromFile("sonido_mapa.ogg") ||
+        !soundBuffers[1].loadFromFile("sonido_mapa2.ogg") ||
+        !soundBuffers[2].loadFromFile("sonido_mapa3.ogg")) {
+        std::cerr << "Error al cargar los archivos de audio" << std::endl;
+        return -1;
+    }
+
+    // Configurar los sonidos
+    for (size_t i = 0; i < sounds.size(); ++i) {
+        sounds[i].setBuffer(soundBuffers[i]);
+        sounds[i].setLoop(false); // No repetir en bucle
+    }
+
+    size_t currentSound = 0;
+    bool soundPlaying = false;
+    sf::Clock clock; // Para medir el tiempo
+
+
+
     int mapaActual = 0; // Índice del mapa actual
 
     // Crear la ventana
     RenderWindow window(VideoMode(1000, 600), "Makibot");
     window.setFramerateLimit(60);
+    // Establecer el color gris oscuro
+    sf::Color grisOscuro(169, 169, 169); // RGB para gris oscuro
 
     // Coordenadas de la vista isométrica
     Transform isoTransform;
@@ -378,6 +405,21 @@ int main()
     // Bucle principal
     while (window.isOpen())
     {
+                    // Lógica de reproducción de sonido
+                if (!soundPlaying) {
+                    sounds[currentSound].play();
+                    soundPlaying = true;
+                    clock.restart(); // Reiniciar el reloj
+                }
+
+                // Verificar si el sonido actual ha terminado
+                if (clock.getElapsedTime() >= sounds[currentSound].getBuffer()->getDuration()) {
+                    currentSound = (currentSound + 1) % sounds.size(); // Cambiar al siguiente sonido
+                    soundPlaying = false; // Permitir que el siguiente sonido se reproduzca
+                }
+
+
+
                 sf::Event event;
                 while (window.pollEvent(event)) {
                     if (event.type == sf::Event::Closed) {
@@ -538,7 +580,7 @@ int main()
 
         
 
-        window.clear(Color::White);
+        window.clear(grisOscuro);
         // dibujar piso 2d
         for (int i = 0; i < gridSize; ++i)
         {
