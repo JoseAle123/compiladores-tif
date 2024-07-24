@@ -50,8 +50,6 @@ Vector2i calculateGridIndices(const Vector2f &position, const Vector2f &gridOrig
     return Vector2i(posXIso, posYISo);
 }
 
-
-
 void moveLeft(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
     targetPosition.x -= xIso / 2.f;
     targetPosition.y += yIso / 2.f;
@@ -92,8 +90,6 @@ void moveDown(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO
     moving = true;
 }
 
-
-
 void crearSpritesPiso(Sprite tiles[][gridSize], const int matriz3D[][gridSize], Texture& texturaLozaAzul, Texture& texturaPiso) {
     for (int i = 0; i < gridSize; ++i) {
         for (int j = 0; j < gridSize; ++j) {
@@ -133,13 +129,10 @@ void configurarSprites(sf::Sprite tiles2d[][gridSize], const int matriz2D[][grid
             } else {
                 tiles2d[i][j].setTexture(texturaPiso2d);
             }
-
             tiles2d[i][j].setPosition(500 + i * 15, 400 + j * 15);
         }
     }
 }
-
-
 void moveRobot(Sprite& makibot, const Vector2f& targetPosition, Vector2f& currentPosition, float xIso, float yIso)
 {
     Vector2f movement(0.f, 0.f);
@@ -157,7 +150,6 @@ void moveRobot(Sprite& makibot, const Vector2f& targetPosition, Vector2f& curren
     makibot.move(movement);
     //currentPosition = makibot.getPosition();  // Actualiza la posición actual después de mover
 }
-
 
 void stopMovement(Sprite& makibot, const Vector2f& targetPosition, const Vector2f& currentPosition, int& currentFrame, bool miraNE, bool miraNO, bool miraSO, bool miraSE, bool& moving, const vector<IntRect>& framesB, const vector<IntRect>& framesF)
 {
@@ -216,7 +208,7 @@ Estado estados[] = {
 };
 
 // Función para cambiar la dirección cíclicamente
-void updateDirection(int &contador, int movimiento) {  //moviento es el valor del arreglo 
+void updateDirection(int& contador, int movimiento) {  //moviento es el valor del arreglo 
     if (movimiento == 1) {                  
         // Incrementar el contador cíclicamente
         contador = (contador + 1) % 4;
@@ -320,14 +312,9 @@ int main()
         return -1;
     }
 
-
-
     //crear el minimapa en 2d
     Sprite tiles2d[gridSize][gridSize];
     configurarSprites(tiles2d, matrices2d[mapaActual], texturaBloque2d, texturaLozaAzul2D, texturaPiso2d);
-
-
-    
 
     const int frameWidth = 25;
     const int frameHeight = 50;
@@ -374,9 +361,6 @@ int main()
     bool moving = false;
     Vector2f targetPosition = makibot.getPosition();
 
-
-
-
     bool miraNE = false;
     bool miraNO = false;
     bool miraSO = false;
@@ -386,21 +370,21 @@ int main()
 
     int contador = 0; // Inicialmente mirando hacia el Sur
 
-    int movimientos[] = {3 , 1, 3 ,3 , 1 ,3 ,2 ,3}; // Array de movimientos
+    int movimientos[] = {1 , 1, 1 ,2 , 1,3,1,1,3 }; // Array de movimientos 1:giro drecha 2:giro izquierda
  
     int contadorMovimientos = 0;
 
+    bool girando = false;
     // Bucle principal
     while (window.isOpen())
     {
-
-                //miraNE = estados[contador].miraNE;
-                //miraNO = estados[contador].miraNO;
-                //miraSO = estados[contador].miraSO;
-                //miraSE = estados[contador].miraSE;
-
-            
-                if (contadorMovimientos < sizeof(movimientos) / sizeof(movimientos[0]) && moving == false) {
+                sf::Event event;
+                while (window.pollEvent(event)) {
+                    if (event.type == sf::Event::Closed) {
+                        window.close();
+                    }
+                }
+                if (contadorMovimientos < sizeof(movimientos) / sizeof(movimientos[0]) && moving == false && girando == false) {
                     int movimiento = movimientos[contadorMovimientos];
                     
                     if (movimiento == 1 || movimiento == 2) {
@@ -413,6 +397,7 @@ int main()
                         miraNO = estados[contador].miraNO;
                         miraSO = estados[contador].miraSO;
                         miraSE = estados[contador].miraSE;
+                        girando = true;
 
                     } else if (movimiento == 3) {
                         // Mover en la dirección actual
@@ -431,12 +416,6 @@ int main()
                     
                     
                 }
-            
-        
-
-
-        
-
 
         // Actualizar la animación del sprite
         if (moving)
@@ -491,11 +470,7 @@ int main()
             {
                 moving = false;
                 targetPosition = makibot.getPosition();
-            }
-
-           
-
-            else
+            }else
             {
                 if (animationClock.getElapsedTime().asSeconds() > animationSpeed)
                 {
@@ -527,16 +502,41 @@ int main()
                 // mapa 2D , se verifica la posicion de los bloques y el makibot
                 updateBlocks(bloques2, mapas[mapaActual], gridSize, texturaBloque, lado, posXIso, posYISo);
             }
-        }
+            if (miraNE)
+                makibot.setScale(1.f, 1.f);
+            else if (miraNO)
+                makibot.setScale(-1.f, 1.f);
+            else if (miraSO)
+                makibot.setScale(-1.f, 1.f);
+            else if (miraSE)
+                makibot.setScale(1.f, 1.f);
+        }else if(girando)
+        {
+            if (animationClock.getElapsedTime().asSeconds() > 1.5){
+                if (miraNE || miraNO)
+                {
+                    makibot.setTextureRect(framesB[currentFrame]);
+                }
+                else if (miraSO || miraSE)
+                {
+                    makibot.setTextureRect(framesF[currentFrame]);
+                }
+                if (miraNE)
+                    makibot.setScale(1.f, 1.f);
+                else if (miraNO)
+                    makibot.setScale(-1.f, 1.f);
+                else if (miraSO)
+                    makibot.setScale(-1.f, 1.f);
+                else if (miraSE)
+                    makibot.setScale(1.f, 1.f);
+                girando = false;
 
-        if (miraNE)
-            makibot.setScale(1.f, 1.f);
-        else if (miraNO)
-            makibot.setScale(-1.f, 1.f);
-        else if (miraSO)
-            makibot.setScale(-1.f, 1.f);
-        else if (miraSE)
-            makibot.setScale(1.f, 1.f);
+                animationClock.restart();
+            }
+        }
+        
+
+        
 
         window.clear(Color::White);
         // dibujar piso 2d
