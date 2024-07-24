@@ -2,12 +2,71 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <string>
+
+#include "converttxt.h"
+#include "analizador.h"
+
+
 using namespace std;
 
 
 const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 600;
 const float BUTTON_SCALE = 1.06f;
+
+void escribirInstruccion(int numero, std::ofstream& archivo) {
+    switch (numero) {
+        case 1:
+            archivo << "avanzar;" << std::endl;
+            break;
+        case 2:
+            archivo << "girarDerecho;" << std::endl;
+            break;
+        case 3:
+            archivo << "girarIzquierda;" << std::endl;
+            break;
+        case 4:
+            archivo << "encender;" << std::endl;
+            break;
+        default:
+            std::cerr << "Número inválido en el array: " << numero << std::endl;
+            break;
+    }
+}
+
+void guardarInstrucciones(int* array, int tamaño,int* array2, int tamaño2,int* array3, int tamaño3, const std::string& nombreArchivo, int iter) {
+    std::ofstream archivo(nombreArchivo, std::ios::out);
+    if (!archivo) {
+        std::cerr << "No se pudo abrir el archivo para escribir." << std::endl;
+        return;
+    }
+    archivo << "iniciar()" << std::endl;
+    for (int i = 0; i < tamaño; ++i) {
+        escribirInstruccion(array[i], archivo);
+        if(array[i] == 5){
+            for (int j = 0; j < tamaño2; ++j) {
+                escribirInstruccion(array2[j], archivo);
+            }
+        }
+        if(array[i] == 6){
+            for(int g = 0; g < iter; ++g){
+                for (int k = 0; k < tamaño3; ++k) {
+                    escribirInstruccion(array3[k], archivo);
+                    if(array3[k] == 5){
+                        for (int m = 0; m < tamaño2; ++m) {
+                            escribirInstruccion(array2[m], archivo);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    archivo << "." << std::endl;
+
+    archivo.close();
+}
 
 void imprimirArray(int array[], int size) {
     std::cout << "Contenido del array: ";
@@ -134,12 +193,18 @@ int main() {
         }
     }
 
+    sf::Texture iniciarTexture;
     sf::Texture incrementTexture;
     sf::Texture decrementTexture;
-    if (!incrementTexture.loadFromFile("images/imageincrement.png" )|| !decrementTexture.loadFromFile("images/imagendecrement.png")) {
+    if (!iniciarTexture.loadFromFile("images/go.png" )|| !incrementTexture.loadFromFile("images/imageincrement.png" )|| !decrementTexture.loadFromFile("images/imagendecrement.png")) {
         std::cerr << "Error cargando la imagen imageincrement.png o decrement" << std::endl;
         return -1;
     }
+
+    int clicks = 0;
+    sf::Sprite iniciarButton(iniciarTexture);
+    iniciarButton.setPosition(420, 480);
+    string lenguajeintermedio;
 
     // imagenes del contador
     int conty = 485;
@@ -202,6 +267,14 @@ int main() {
                 window.close();
             }
             if (event.type == sf::Event::MouseButtonPressed) {
+                if (iniciarButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                    counter++;
+                    guardarInstrucciones(mainbot, 12,f1bot, 8,buclebot, 4, "instrucciones.txt", counter);
+                    lenguajeintermedio = txtConvertstring("instrucciones.txt");
+                    analizadorSyx(lenguajeintermedio);
+                    cout << lenguajeintermedio << endl;
+                    numberSprite.setTexture(textures[counter]);
+                }
                 if (incrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
                     if (counter < 5) {
                         counter++;
@@ -261,11 +334,13 @@ int main() {
                 }
             }
         }
+        scaleOnHover(iniciarButton, window);
         
         scaleOnHover(incrementButton, window);
         scaleOnHover(decrementButton, window);
 
         window.clear();
+        window.draw(iniciarButton);
         window.draw(numberSprite);
         window.draw(incrementButton);
         window.draw(decrementButton);
