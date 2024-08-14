@@ -8,3 +8,4 @@ output/
 *.hpp
 # Ignorar el archivo Makefile
 Makefile
+instrucciones.txt
