@@ -1,0 +1,8 @@
+inicio -> i n i c i a r ( ) comandos
+comandos -> comando comandos 
+comandos -> .
+comando -> giro 
+comando -> e n c e n d e r ;  
+comando -> a v a n z a r ;
+giro -> g i r a r I z q u i e r d a ;
+giro -> g i r a r D e r e c h o ;
