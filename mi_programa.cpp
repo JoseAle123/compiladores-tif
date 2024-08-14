@@ -5,7 +5,8 @@
 #include <iostream>
 #include <thread> // Para std::this_thread::sleep_for
 #include "mapas.h"
-
+#include "analizador.h"
+#include "converttxt.h"
 //------------------------------------------------------------------------------------------------------------
 #include <fstream>
 #include <string>
@@ -13,184 +14,9 @@
 #include <stdio.h>
 #include <sstream>
 //---------------------------------------------------------------------------------------------------
-using namespace std;
 
-string eliminarSaltosDeLinea(const string &texto)
-{
-    string resultado;
-    for (char c : texto)
-    {
-        if (c != '\n' && c != '\r')
-        {
-            resultado += c;
-        }
-    }
-    return resultado;
-}
-
-string leerArchivo(const string &nombreArchivo)
-{
-    ifstream archivo(nombreArchivo);
-    stringstream buffer;
-    if (archivo)
-    {
-        buffer << archivo.rdbuf();
-        archivo.close();
-    }
-    else
-    {
-        cerr << "No se pudo abrir el archivo: " << nombreArchivo << endl;
-    }
-    return buffer.str();
-}
-
-string txtConvertstring(string nametxt)
-{
-    string result;
-    result = eliminarSaltosDeLinea(leerArchivo(nametxt));
-    return result;
-}
 //-----------------------------------------------------------------------------------------------
-using namespace std;
-int preanalisis;
-string cadena;
 
-int getga()
-{
-    string temp;
-    int charl = cadena[0];
-    for (size_t i = 1; i < cadena.length(); ++i)
-    {
-        temp += cadena[i];
-    }
-    cadena = temp;
-    return charl;
-}
-// rutinas auxiliares
-void error()
-{
-    printf("Error de sintaxis");
-}
-
-void parea(int t)
-{
-    if (preanalisis == t)
-        preanalisis = getga();
-    else
-        error();
-}
-
-// rutinas de reglas
-void giro()
-{
-
-    parea('g');
-    parea('i');
-    parea('r');
-    parea('a');
-    parea('r');
-
-    if (preanalisis == 'I')
-    {
-        parea('I');
-        parea('z');
-        parea('q');
-        parea('u');
-        parea('i');
-        parea('e');
-        parea('r');
-        parea('d');
-        parea('a');
-        parea(';');
-    }
-    else if (preanalisis == 'D')
-    {
-        parea('D');
-        parea('e');
-        parea('r');
-        parea('e');
-        parea('c');
-        parea('h');
-        parea('o');
-        parea(';');
-    }
-
-    else
-        error();
-}
-void comando()
-{
-    if (preanalisis == 'g')
-    {
-        giro();
-    }
-    else if (preanalisis == 'e')
-    {
-        parea('e');
-        parea('n');
-        parea('c');
-        parea('e');
-        parea('n');
-        parea('d');
-        parea('e');
-        parea('r');
-        parea(';');
-    }
-    else if (preanalisis == 'a')
-    {
-        parea('a');
-        parea('v');
-        parea('a');
-        parea('n');
-        parea('z');
-        parea('a');
-        parea('r');
-        parea(';');
-    }
-    else
-        error();
-}
-
-void comandos()
-{
-    if (preanalisis == 'g' || preanalisis == 'e' || preanalisis == 'a')
-    {
-        comando();
-        comandos();
-    }
-    else if (preanalisis == '.')
-    {
-        parea('.');
-    }
-    else
-        error();
-}
-
-void inicio()
-{
-    if (preanalisis == 'i')
-    {
-        parea('i');
-        parea('n');
-        parea('i');
-        parea('c');
-        parea('i');
-        parea('a');
-        parea('r');
-        parea('(');
-        parea(')');
-        comandos();
-    }
-    else
-        error();
-}
-
-void analizadorSyx(string texto)
-{
-    cadena = texto;
-    preanalisis = getga();
-    inicio();
-}
 //--------------------------------------------------------------------------------------------------
 const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 600;
@@ -983,7 +809,7 @@ int main()
 
         if (booliniciar)
         {
-            if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false && colisionando==false)
+            if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false && colisionando == false)
             {
                 if (mainbot[contadorMovimientos] != 7)
                 {
@@ -1271,12 +1097,12 @@ int main()
                     updateBlocks(bloques2, mapas[mapaActual], gridSize, texturaBloque, lado, posXIso, posYISo);
                 }
             }
-            else if(colisionando == true)
+            else if (colisionando == true)
             {
                 if (animationClock.getElapsedTime().asSeconds() > 1.5)
                 {
                     colisionando = false;
-                    cout<<"cambiando colisionando a false"<<endl;
+                    cout << "cambiando colisionando a false" << endl;
                     animationClock.restart();
                 }
             }

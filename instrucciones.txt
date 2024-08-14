@@ -11,4 +11,6 @@ avanzar;
 avanzar;
 avanzar;
 avanzar;
+girarIzquierda;
+avanzar;
 .
