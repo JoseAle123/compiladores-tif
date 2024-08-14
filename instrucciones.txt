@@ -1,8 +1,6 @@
 iniciar()
-girarDerecho;
 avanzar;
 avanzar;
-girarIzquierda;
 avanzar;
 avanzar;
 .

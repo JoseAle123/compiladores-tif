@@ -414,44 +414,6 @@ void move2(Vector2f &targetPosition, bool &moving, const Estado &estado, float x
     moving = true;
 }
 
-// Función que suma los elementos correspondientes de cuatro arrays
-void Arraytotal(const int* array1, const int* array2, const int* array3, const int* array4, int* resultado, int count) {
-    int tamanio = 12; // Tamaño de `mainbot`
-    int tamanio2 = 8; // Tamaño de `f1bot`
-    int tamanio3 = 4; // Tamaño de `buclebot`
-    int contador = 0;
-    
-    for(int i = 0; i < tamanio; i++) {
-        if(array1[i] == 0) {
-            break;
-        }
-        if(array1[i] == 5) {
-            for(int j = 0; j < tamanio2; j++) {
-                if(array3[j] == 0) {
-                    break;
-                }
-                resultado[contador] = array3[j];
-                contador++;
-            }
-        }
-        else if(array1[i] == 6) {
-            for(int k = 0; k < count; k++) {
-                for(int l = 0; l < tamanio3; l++) {
-                    if(array4[l] == 0) {
-                        break;
-                    }
-                    resultado[contador] = array4[l];
-                    contador++;
-                }
-            }
-        }
-        else {
-            resultado[contador] = array1[i];
-            contador++;
-        }
-    }
-}
-
 
 int main()
 {
@@ -491,7 +453,7 @@ int main()
     decrementButton.setPosition(620, conty+43);
 
     // Cargar texturas
-    std::vector<sf::Texture> buttonTexture(7);
+    std::vector<sf::Texture> buttonTexture(8);
 
     if (!buttonTexture[0].loadFromFile("images/vacio.png") ||
         !buttonTexture[5].loadFromFile("images/f1.png") ||
@@ -499,8 +461,8 @@ int main()
         !buttonTexture[2].loadFromFile("images/giroright.png") ||
         !buttonTexture[1].loadFromFile("images/avanzar.png") ||
         !buttonTexture[6].loadFromFile("images/bucle.png") ||
-        !buttonTexture[4].loadFromFile("images/foco.png") 
-
+        !buttonTexture[4].loadFromFile("images/foco.png") ||
+        !buttonTexture[7].loadFromFile("images/current.png") 
         ) {
         return -1;
     }
@@ -688,10 +650,22 @@ int main()
 
     
     int contadorMovimientos = 0;
+    int contadorMovf1 = 0;
+    int contadorMovbucle = 0;
+
+    int currentIteraciones = 0;
 
     bool girando = false;
     // Bucle principal
     bool booliniciar = false;
+
+    int movimiento = 0;
+    int movimientof1 = 0;
+    int movimientoBucle = 0;
+
+    int lastmov;
+    int lastmovf1;
+    int lastmovbucle;
     while (window.isOpen()) 
     {
                     // Lógica de reproducción de sonido
@@ -770,6 +744,7 @@ int main()
                                     imprimirArray(buclebot,4);
                                 }
                                 clicDerechoPresionado = false;
+
                             }
                         }
                         
@@ -784,15 +759,19 @@ int main()
                 }
                 //-------------------------intrucciones-----------------------------------------
 
-                int array[12 + 8 + (4 * 5)] = {0};
-                Arraytotal(mainbot, mainbot, f1bot, buclebot, array, counter);
-
-
                 if (booliniciar) {
-                    if (contadorMovimientos < sizeof(array) / sizeof(array[0]) && moving == false && girando == false) {
-                        int movimiento = array[contadorMovimientos];
+                    if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false) {
+                        if(mainbot[contadorMovimientos] != 7){movimiento = mainbot[contadorMovimientos]; }
+                        if(contadorMovimientos != 0){
+                            if(mainbot[contadorMovimientos - 1] == 7){
+                                mainbot[contadorMovimientos - 1] = lastmov;
+                            }
+                        }
+                        //int movimiento = mainbot[contadorMovimientos];
 
                         if (movimiento == 2 || movimiento == 3) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
                             // Cambia la dirección cíclicamente
                             updateDirection(contador, movimiento);
                             cout << contador << "----------------------" << endl;
@@ -801,8 +780,11 @@ int main()
                             miraSO = estados[contador].miraSO;
                             miraSE = estados[contador].miraSE;
                             girando = true;
+                            contadorMovimientos++;
 
                         } else if (movimiento == 1) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
                             // Mover en la dirección actual
                             Estado estado;
                             estado.miraNE = miraNE;
@@ -811,10 +793,106 @@ int main()
                             estado.miraSE = miraSE;
 
                             move2(targetPosition, moving, estado, xIso, yIso);
-                        }
+                            contadorMovimientos++;
+                        }else if (movimiento == 5) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
+
+                            cout<<"gaaaa"<<endl;
+                            if (contadorMovf1 < sizeof(f1bot) / sizeof(f1bot[0]) && moving == false && girando == false) {
+
+                                if(f1bot[contadorMovf1] != 7){movimientof1 = f1bot[contadorMovf1]; }
+                                if(contadorMovf1 != 0){
+                                    if(f1bot[contadorMovf1 - 1] == 7){
+                                        f1bot[contadorMovf1 - 1] = lastmovf1;
+                                    }
+                                }
+
+                                if (movimientof1 == 2 || movimientof1 == 3) {
+                                    lastmovf1 = movimientof1;
+                                    f1bot[contadorMovf1] = 7;
+                                    // Cambia la dirección cíclicamente
+                                    updateDirection(contador, movimientof1);
+                                    cout << contador << "----------------------" << endl;
+                                    miraNE = estados[contador].miraNE;
+                                    miraNO = estados[contador].miraNO;
+                                    miraSO = estados[contador].miraSO;
+                                    miraSE = estados[contador].miraSE;
+                                    girando = true;
+                                    contadorMovf1++;
+
+                                } else if (movimientof1 == 1) {
+                                    lastmovf1 = movimientof1;
+                                    f1bot[contadorMovf1] = 7;
+                                    // Mover en la dirección actual
+                                    Estado estado;
+                                    estado.miraNE = miraNE;
+                                    estado.miraNO = miraNO;
+                                    estado.miraSO = miraSO;
+                                    estado.miraSE = miraSE;
+
+                                    move2(targetPosition, moving, estado, xIso, yIso);
+                                    contadorMovf1++;
+                                }else if (movimientof1 == 0) {
+                                    contadorMovf1 = 0;
+                                    contadorMovimientos++;
+                                }
+
+                                // Avanzar en el array de movimientos
+                            }
+                        }else if (movimiento == 6 && currentIteraciones <  counter) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
+
+                            cout<<"bucleoco"<<endl;
+                            if (contadorMovbucle < sizeof(buclebot) / sizeof(buclebot[0]) && moving == false && girando == false) {
+                                if(buclebot[contadorMovbucle] != 7){movimientoBucle = buclebot[contadorMovbucle]; }
+                                if(contadorMovbucle != 0){
+                                    if(buclebot[contadorMovbucle - 1] == 7){
+                                        buclebot[contadorMovbucle - 1] = lastmovbucle;
+                                    }
+                                }
+
+                                if (movimientoBucle == 2 || movimientoBucle == 3) {
+                                    lastmovbucle = movimientoBucle;
+                                    buclebot[contadorMovbucle] = 7;
+                                    // Cambia la dirección cíclicamente
+                                    updateDirection(contador, movimientoBucle);
+                                    cout << contador << "----------------------" << endl;
+                                    miraNE = estados[contador].miraNE;
+                                    miraNO = estados[contador].miraNO;
+                                    miraSO = estados[contador].miraSO;
+                                    miraSE = estados[contador].miraSE;
+                                    girando = true;
+                                    contadorMovbucle++;
+
+                                } else if (movimientoBucle == 1) {
+                                    lastmovbucle = movimientoBucle;
+                                    buclebot[contadorMovbucle] = 7;
+                                    // Mover en la dirección actual
+                                    Estado estado;
+                                    estado.miraNE = miraNE;
+                                    estado.miraNO = miraNO;
+                                    estado.miraSO = miraSO;
+                                    estado.miraSE = miraSE;
+
+                                    move2(targetPosition, moving, estado, xIso, yIso);
+                                    contadorMovbucle++;
+                                }else if (movimientoBucle == 0) {
+                                    contadorMovbucle = 0;
+                                    currentIteraciones++;
+                                }
+
+                                // Avanzar en el array de movimientos
+                            }
+                        }else if (currentIteraciones == counter){
+                            contadorMovimientos++;
+                            currentIteraciones = 0;
+
+                        }else if(movimiento == 0){contadorMovimientos++;}
 
                         // Avanzar en el array de movimientos
-                        contadorMovimientos++;
+                        //contadorMovimientos++;
                     } else if(!moving && !girando){
                         cout << "Llegue al final del array de movimientos" << endl;
                         contadorMovimientos = 0;
