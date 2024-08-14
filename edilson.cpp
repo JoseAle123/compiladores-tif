@@ -1,16 +1,16 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <vector>
-#include <string>
+#include <cmath>
 #include <iostream>
+#include <thread> // Para std::this_thread::sleep_for
+#include "mapas.h"
+
+//------------------------------------------------------------------------------------------------------------
 #include <fstream>
 #include <string>
-
 #include "converttxt.h"
 #include "analizador.h"
-
-
-using namespace std;
-
 
 const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 600;
@@ -181,9 +181,243 @@ void scaleOnHover(sf::Sprite& sprite, sf::RenderWindow& window) {
     }
 }
 
-int main() {
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "MakyBot");
+//----------------------------------------------------------------------------------------------------------------
 
+#define PI 3.14159265f
+
+using namespace std;
+using namespace sf;
+
+const float lado = 50.f;
+const int gridSize = 8;
+const float xIso = sqrt(2 * lado * lado);
+const float yIso = xIso / 2.f;
+const float ladoIso = sqrt(xIso * xIso / 4.f + yIso * yIso / 4.f);
+const float angXY = atan2f(xIso, yIso);
+const float angYX = atan2f(yIso, xIso);
+const Vector2f pos_origin(300.f, 150.f);
+
+Vector2i calculateGridIndices(const Vector2f &position, const Vector2f &gridOrigin)
+{
+    Vector2f relativePosition = position - gridOrigin;
+    // cout<<"posicionxy: "<<position.x<<"  "<<position.y<<endl;
+    float ang_c1 = angXY - atan2f(abs(relativePosition.x), relativePosition.y);
+    float ang_c2 = 2.f * angXY - ang_c1;
+    float distX, distY;
+    // cout<<ang_c1*180.f/PI<<endl;
+    float hipo = sqrt(relativePosition.x * relativePosition.x + relativePosition.y * relativePosition.y);
+
+    if (relativePosition.x <= 0)
+    {
+        distX = (hipo / sin(PI - 2.f * angXY)) * sin(ang_c1);
+        distY = (hipo / sin(PI - 2.f * angXY)) * sin(ang_c2);
+    }
+    else
+    {
+        distY = (hipo / sin(PI - 2.f * angXY)) * sin(ang_c1);
+        distX = (hipo / sin(PI - 2.f * angXY)) * sin(ang_c2);
+    }
+    // cout<<"distancia xy isometricas"<<distX<<" "<<distY<<endl;
+    Vector2f transformedPosition(
+        distX / ladoIso,
+        distY / ladoIso);
+
+    int posXIso = floor(transformedPosition.x);
+    int posYISo = floor(transformedPosition.y);
+
+    return Vector2i(posXIso, posYISo);
+}
+
+/* void moveLeft(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x -= xIso / 2.f;
+    targetPosition.y += yIso / 2.f;
+    miraNE = false;
+    miraNO = false;
+    miraSO = true;
+    miraSE = false;
+    moving = true;
+}
+
+void moveRight(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x += xIso / 2.f;
+    targetPosition.y -= yIso / 2.f;
+    miraNE = true;
+    miraNO = false;
+    miraSO = false;
+    miraSE = false;
+    moving = true;
+}
+
+void moveUp(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x -= xIso / 2.f;
+    targetPosition.y -= yIso / 2.f;
+    miraNE = false;
+    miraNO = true;
+    miraSO = false;
+    miraSE = false;
+    moving = true;
+}
+
+void moveDown(Vector2f &targetPosition, bool &moving, bool &miraNE, bool &miraNO, bool &miraSO, bool &miraSE, float xIso, float yIso) {
+    targetPosition.x += xIso / 2.f;
+    targetPosition.y += yIso / 2.f;
+    miraNE = false;
+    miraNO = false;
+    miraSO = false;
+    miraSE = true;
+    moving = true;
+} */
+
+void crearSpritesPiso(Sprite tiles[][gridSize], const int matriz3D[][gridSize], Texture& texturaLozaAzul, Texture& texturaPiso) {
+    for (int i = 0; i < gridSize; ++i) {
+        for (int j = 0; j < gridSize; ++j) {
+            if (matriz3D[i][j] == -1) {
+                tiles[i][j].setTexture(texturaLozaAzul);
+            } else {
+                tiles[i][j].setTexture(texturaPiso);
+            }
+            tiles[i][j].setPosition(i * lado, j * lado);
+        }
+    }
+}
+
+// Función para crear los sprites de los bloques
+void crearSpritesBloques(vector<Sprite>& bloques, const int matriz3D[][gridSize], Texture& texturaBloque) {
+    for (int i = 0; i < gridSize; ++i) {
+        for (int j = 0; j < gridSize; ++j) {
+            if (matriz3D[i][j] != 0) {
+                for (int k = 1; k <= matriz3D[i][j]; ++k) {
+                    Sprite bloque(texturaBloque);
+                    bloque.setPosition(i * lado - (8.0f * k), j * lado - (8.0f * k));
+                    bloques.push_back(bloque);
+                }
+            }
+        }
+    }
+}
+
+// Función para crear los sprites en una matriz 2D
+void configurarSprites(sf::Sprite tiles2d[][gridSize], const int matriz2D[][gridSize], sf::Texture& texturaBloque2d, sf::Texture& texturaLozaAzul2D, sf::Texture& texturaPiso2d) {
+    for (int i = 0; i < gridSize; ++i) {
+        for (int j = 0; j < gridSize; ++j) {
+            if (matriz2D[i][j] == 1) {
+                tiles2d[i][j].setTexture(texturaBloque2d);
+            } else if (matriz2D[i][j] == -1) {
+                tiles2d[i][j].setTexture(texturaLozaAzul2D);
+            } else {
+                tiles2d[i][j].setTexture(texturaPiso2d);
+            }
+            tiles2d[i][j].setPosition(500 + i * 15, 400 + j * 15);
+        }
+    }
+}
+void moveRobot(Sprite& makibot, const Vector2f& targetPosition, Vector2f& currentPosition, float xIso, float yIso)
+{
+    Vector2f movement(0.f, 0.f);
+
+    if (targetPosition.x > currentPosition.x)
+        movement.x = xIso / 2.f / 50.f;
+    else if (targetPosition.x < currentPosition.x)
+        movement.x = -xIso / 2.f / 50.f;
+
+    if (targetPosition.y > currentPosition.y)
+        movement.y = yIso / 2.f / 50.f;
+    else if (targetPosition.y < currentPosition.y)
+        movement.y = -yIso / 2.f / 50.f;
+
+    makibot.move(movement);
+    //currentPosition = makibot.getPosition();  // Actualiza la posición actual después de mover
+}
+
+void stopMovement(Sprite& makibot, const Vector2f& targetPosition, const Vector2f& currentPosition, int& currentFrame, bool miraNE, bool miraNO, bool miraSO, bool miraSE, bool& moving, const vector<IntRect>& framesB, const vector<IntRect>& framesF)
+{
+    if (abs(targetPosition.x - currentPosition.x) < 1.f && abs(targetPosition.y - currentPosition.y) < 1.f)
+    {
+        moving = false;
+        currentFrame = 0;
+        makibot.setPosition(targetPosition);
+        if (miraNE || miraNO)
+        {
+            makibot.setTextureRect(framesB[currentFrame]);
+            cout << "arriba" << endl;
+        }
+        else if (miraSE || miraSO)
+        {
+            makibot.setTextureRect(framesF[currentFrame]);
+            cout << "abajo" << endl;
+        }
+    }
+}
+
+
+void updateBlocks(vector<Sprite>& bloques2, const int mapas[][gridSize], int gridSize, const Texture& texturaBloque, float lado, int posXIso, int posYISo)
+{
+    bloques2.clear();
+    for (int i = 0; i < gridSize; ++i)
+    {
+        for (int j = 0; j < gridSize; ++j)
+        {
+            if (posXIso <= i && posYISo <= j)
+            {
+                for (int k = 1; k <= mapas[i][j]; ++k)
+                {
+                    Sprite bloque(texturaBloque);
+                    bloque.setPosition(i * lado - (8.0f * k), j * lado - (8.0f * k));
+                    bloques2.push_back(bloque);
+                }
+            }
+        }
+    }
+}
+
+
+struct Estado {
+    bool miraNE;
+    bool miraNO;
+    bool miraSO;
+    bool miraSE;
+};
+
+Estado estados[] = {
+    {false, false, false, true},  // 0: Mira hacia el abajo   
+    {false, false, true, false}, // 1: Mira hacia el izquierda       
+    {false, true, false, false}, // 2: Mira hacia arriba
+    {true, false, false, false} // 3: Mira hacia el derecha
+};
+
+// Función para cambiar la dirección cíclicamente
+void updateDirection(int& contador, int movimiento) {  //moviento es el valor del arreglo 
+    if (movimiento == 2) {                  
+        // Incrementar el contador cíclicamente
+        contador = (contador + 1) % 4;
+    } else if (movimiento == 3) {
+        // Decrementar el contador cíclicamente
+        contador = (contador - 1 + 4) % 4; // +4 para manejar el caso negativo
+    }
+}
+
+// Función para mover el robot
+void move2(Vector2f &targetPosition, bool &moving, const Estado &estado, float xIso, float yIso) {
+    if (estado.miraNE) {
+        targetPosition.x += xIso / 2.f;
+        targetPosition.y -= yIso / 2.f;
+    } else if (estado.miraNO) {
+        targetPosition.x -= xIso / 2.f;
+        targetPosition.y -= yIso / 2.f;
+    } else if (estado.miraSO) {
+        targetPosition.x -= xIso / 2.f;
+        targetPosition.y += yIso / 2.f;
+    } else if (estado.miraSE) {
+        targetPosition.x += xIso / 2.f;
+        targetPosition.y += yIso / 2.f;
+    }
+    moving = true;
+}
+
+
+int main()
+{
+    //-----------------------------------------------------------------------------------------------------------
     //contador
     sf::Texture textures[6];
     for (int i = 0; i < 6; ++i) {
@@ -219,7 +453,7 @@ int main() {
     decrementButton.setPosition(620, conty+43);
 
     // Cargar texturas
-    std::vector<sf::Texture> buttonTexture(7);
+    std::vector<sf::Texture> buttonTexture(8);
 
     if (!buttonTexture[0].loadFromFile("images/vacio.png") ||
         !buttonTexture[5].loadFromFile("images/f1.png") ||
@@ -227,8 +461,8 @@ int main() {
         !buttonTexture[2].loadFromFile("images/giroright.png") ||
         !buttonTexture[1].loadFromFile("images/avanzar.png") ||
         !buttonTexture[6].loadFromFile("images/bucle.png") ||
-        !buttonTexture[4].loadFromFile("images/foco.png") 
-
+        !buttonTexture[4].loadFromFile("images/foco.png") ||
+        !buttonTexture[7].loadFromFile("images/current.png") 
         ) {
         return -1;
     }
@@ -256,94 +490,585 @@ int main() {
     bool boolmain = false; bool boolf1 = false; bool boolbucle = false;
     bool clicDerechoPresionado = false; 
 
-    while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed){
-                window.close();
-            }
-            if (event.type == sf::Event::MouseButtonPressed) {
-                if (iniciarButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
-                    guardarInstrucciones(mainbot, 12,f1bot, 8,buclebot, 4, "instrucciones.txt", counter);
-                    lenguajeintermedio = txtConvertstring("instrucciones.txt");
-                    analizadorSyx(lenguajeintermedio);
-                    cout << lenguajeintermedio << endl;
+    //-----------------------------------------------------------------------------------------------------------
+
+    std::vector<sf::SoundBuffer> soundBuffers(3);
+    std::vector<sf::Sound> sounds(3);
+
+    // Cargar los archivos de audio
+    if (!soundBuffers[0].loadFromFile("sonido_mapa.ogg") ||
+        !soundBuffers[1].loadFromFile("sonido_mapa2.ogg") ||
+        !soundBuffers[2].loadFromFile("sonido_mapa3.ogg")) {
+        std::cerr << "Error al cargar los archivos de audio" << std::endl;
+        return -1;
+    }
+
+    // Configurar los sonidos
+    for (size_t i = 0; i < sounds.size(); ++i) {
+        sounds[i].setBuffer(soundBuffers[i]);
+        sounds[i].setLoop(false); // No repetir en bucle
+    }
+
+    size_t currentSound = 0;
+    bool soundPlaying = false;
+    sf::Clock clock; // Para medir el tiempo
+
+
+
+    int mapaActual = 0; // Índice del mapa actual
+
+    // Crear la ventana
+    RenderWindow window(VideoMode(1000, 600), "Makibot");
+    window.setFramerateLimit(60);
+    // Establecer el color gris oscuro
+    sf::Color grisOscuro(169, 169, 169); // RGB para gris oscuro
+
+    // Coordenadas de la vista isométrica
+    Transform isoTransform;
+    isoTransform.translate(300.f, 150.f);
+    isoTransform.scale(1.f, 0.5f);
+    isoTransform.rotate(45.f);
+
+    // Cargar la textura del piso
+    Texture texturaPiso;
+    if (!texturaPiso.loadFromFile("images/loza_verde.png"))
+    {
+        return -1;
+    }
+    Texture texturaPiso2d;
+    if (!texturaPiso2d.loadFromFile("images/loza_verde2d.png"))
+    {
+        return -1;
+    }
+    // Cargar la textura del bloque
+    Texture texturaBloque;
+    if (!texturaBloque.loadFromFile("images/loza_naranja.png"))
+    {
+        return -1;
+    }
+    Texture texturaBloque2d;
+    if (!texturaBloque2d.loadFromFile("images/loza_naranja2d.png"))
+    {
+        return -1;
+    }
+
+    // Cargar la textura del punto final del mapa3D
+    Texture texturaLozaAzul;
+    if (!texturaLozaAzul.loadFromFile("images/loza_azul.png"))
+    {
+        return -1;
+    }
+
+
+
+    // Crear el sprite del piso
+
+    Sprite tiles[gridSize][gridSize];
+    
+    crearSpritesPiso(tiles, mapas[mapaActual], texturaLozaAzul, texturaPiso);
+
+    // Vector de sprites para los bloques
+    vector<Sprite> bloques;
+    // Vector para los bloques q se sobreponen al makibot
+    vector<Sprite> bloques2;
+    // Inicializar los sprites del piso y los bloques
+    crearSpritesBloques(bloques, mapas[mapaActual], texturaBloque);
+
+
+    // Figura del makibot en 2D
+    CircleShape makibot2D;
+    makibot2D.setRadius(5.f);
+    makibot2D.setFillColor(Color::White);
+    makibot2D.setOrigin(makibot2D.getRadius(), makibot2D.getRadius());
+    makibot2D.setPosition(507.5f, 407.5f);
+
+
+    // Cargar la textura del punto final del mapa2D
+    Texture texturaLozaAzul2D;
+    if (!texturaLozaAzul2D.loadFromFile("images/loza_azul2d.png"))
+    {
+        return -1;
+    }
+
+    //crear el minimapa en 2d
+    Sprite tiles2d[gridSize][gridSize];
+    configurarSprites(tiles2d, matrices2d[mapaActual], texturaBloque2d, texturaLozaAzul2D, texturaPiso2d);
+
+    const int frameWidth = 25;
+    const int frameHeight = 50;
+    // SPRITES FRONTAL
+    Texture spriteMaki;
+    if (!spriteMaki.loadFromFile("images/sprite_makibot.png"))
+    {
+        return -1;
+    }
+
+    // Crear el sprite de la animación
+    Sprite makibot;
+    makibot.setTexture(spriteMaki);
+
+    // Definir los rectángulos para cada fotograma de la animación
+
+    vector<IntRect> framesF;
+    framesF.push_back(IntRect(0, 0, frameWidth, frameHeight));
+    framesF.push_back(IntRect(frameWidth, 0, frameWidth, frameHeight));
+    framesF.push_back(IntRect(2 * frameWidth, 0, frameWidth, frameHeight));
+
+    IntRect focoF = IntRect(3 * frameWidth, 0, frameWidth, frameHeight);
+
+    vector<IntRect> framesB;
+    framesB.push_back(IntRect(0, frameHeight, frameWidth, frameHeight));
+    framesB.push_back(IntRect(frameWidth, frameHeight, frameWidth, frameHeight));
+    framesB.push_back(IntRect(2 * frameWidth, frameHeight, frameWidth, frameHeight));
+
+    IntRect focoB = IntRect(3 * frameWidth, frameHeight, frameWidth, frameHeight);
+
+    // Ajustar la posición inicial del sprite para dibujarse desde la parte inferior
+    makibot.setOrigin(12.5f, 50.f);
+    makibot.setPosition(300.f, 150.f + yIso / 2.f);
+
+    // primera aparicion del makibot
+    makibot.setTextureRect(framesF[0]);
+
+    // Variables para la animación
+    int currentFrame = 0;
+    Clock animationClock;
+    float animationSpeed = 0.3f; 
+
+    // Variables para controlar el movimiento
+    bool moving = false;
+    Vector2f targetPosition = makibot.getPosition();
+
+    bool miraNE = false;
+    bool miraNO = false;
+    bool miraSO = false;
+    bool miraSE = true;
+
+    //int CountMovimiento = 0;
+
+    int contador = 0; // Inicialmente mirando hacia el Sur
+
+    
+    int contadorMovimientos = 0;
+    int contadorMovf1 = 0;
+    int contadorMovbucle = 0;
+
+    int currentIteraciones = 0;
+
+    bool girando = false;
+    // Bucle principal
+    bool booliniciar = false;
+
+    int movimiento = 0;
+    int movimientof1 = 0;
+    int movimientoBucle = 0;
+
+    int lastmov;
+    int lastmovf1;
+    int lastmovbucle;
+    while (window.isOpen()) 
+    {
+                    // Lógica de reproducción de sonido
+                if (!soundPlaying) {
+                    sounds[currentSound].play();
+                    soundPlaying = true;
+                    clock.restart(); // Reiniciar el reloj
                 }
-                if (incrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
-                    if (counter < 5) {
-                        counter++;
-                        numberSprite.setTexture(textures[counter]);
+
+                // Verificar si el sonido actual ha terminado
+                if (clock.getElapsedTime() >= sounds[currentSound].getBuffer()->getDuration()) {
+                    currentSound = (currentSound + 1) % sounds.size(); // Cambiar al siguiente sonido
+                    soundPlaying = false; // Permitir que el siguiente sonido se reproduzca
+                }
+
+
+                //gaaaaaaaaaaa
+                sf::Event event;
+                while (window.pollEvent(event)) {
+                    if (event.type == sf::Event::Closed) {
+                        window.close();
+                    }
+                    //-------------------------intrucciones-----------------------------------------
+                    if (event.type == sf::Event::MouseButtonPressed) {
+                        if (iniciarButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                            guardarInstrucciones(mainbot, 12,f1bot, 8,buclebot, 4, "instrucciones.txt", counter);
+                            lenguajeintermedio = txtConvertstring("instrucciones.txt");
+                            analizadorSyx(lenguajeintermedio);
+                            cout << lenguajeintermedio << endl;
+                            booliniciar = true;
+                        
+                        }
+                        if (incrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                            if (counter < 5) {
+                                counter++;
+                                numberSprite.setTexture(textures[counter]);
+                            }
+                        }
+
+                        if (decrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                            if (counter > 0) {
+                                counter--;
+                                numberSprite.setTexture(textures[counter]);
+                            }
+                        }
+                    }
+                }
+                //-------------------------intrucciones-----------------------------------------
+                // Procesar interacción del ratón
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                for (auto& button : buttons) {
+                    sf::FloatRect bounds = button.sprite.getGlobalBounds();
+                    if (bounds.contains(static_cast<sf::Vector2f>(mousePos))) {
+                        if (!button.isHovered) {
+                            button.sprite.setScale(BUTTON_SCALE, BUTTON_SCALE);
+                            button.isHovered = true;
+                        }
+
+
+                        else if (event.type == sf::Event::MouseButtonPressed) {
+                            if (event.mouseButton.button == sf::Mouse::Left) {
+                                clicDerechoPresionado = true;
+                            }
+                        } else if (event.type == sf::Event::MouseButtonReleased) {
+                            if (event.mouseButton.button == sf::Mouse::Left && clicDerechoPresionado == true ) {
+                                if(boolmain){
+                                    InsertarInstru(mainbot,12,button.id );
+                                    imprimirArray(mainbot,12);
+                                }
+                                if(boolf1){
+                                    InsertarInstru(f1bot,8,button.id );
+                                    imprimirArray(f1bot,8);
+                                }
+                                if(boolbucle){
+                                    InsertarInstru(buclebot,4,button.id );
+                                    imprimirArray(buclebot,4);
+                                }
+                                clicDerechoPresionado = false;
+
+                            }
+                        }
+                        
+
+                    } else {
+                        if (button.isHovered) {
+                            button.sprite.setScale(1.f, 1.f);
+                            button.isHovered = false;
+                        }
+                    }
+
+                }
+                //-------------------------intrucciones-----------------------------------------
+
+                if (booliniciar) {
+                    if (contadorMovimientos < sizeof(mainbot) / sizeof(mainbot[0]) && moving == false && girando == false) {
+                        if(mainbot[contadorMovimientos] != 7){movimiento = mainbot[contadorMovimientos]; }
+                        if(contadorMovimientos != 0){
+                            if(mainbot[contadorMovimientos - 1] == 7){
+                                mainbot[contadorMovimientos - 1] = lastmov;
+                            }
+                        }
+                        //int movimiento = mainbot[contadorMovimientos];
+
+                        if (movimiento == 2 || movimiento == 3) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
+                            // Cambia la dirección cíclicamente
+                            updateDirection(contador, movimiento);
+                            cout << contador << "----------------------" << endl;
+                            miraNE = estados[contador].miraNE;
+                            miraNO = estados[contador].miraNO;
+                            miraSO = estados[contador].miraSO;
+                            miraSE = estados[contador].miraSE;
+                            girando = true;
+                            contadorMovimientos++;
+
+                        } else if (movimiento == 1) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
+                            // Mover en la dirección actual
+                            Estado estado;
+                            estado.miraNE = miraNE;
+                            estado.miraNO = miraNO;
+                            estado.miraSO = miraSO;
+                            estado.miraSE = miraSE;
+
+                            move2(targetPosition, moving, estado, xIso, yIso);
+                            contadorMovimientos++;
+                        }else if (movimiento == 5) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
+
+                            cout<<"gaaaa"<<endl;
+                            if (contadorMovf1 < sizeof(f1bot) / sizeof(f1bot[0]) && moving == false && girando == false) {
+
+                                if(f1bot[contadorMovf1] != 7){movimientof1 = f1bot[contadorMovf1]; }
+                                if(contadorMovf1 != 0){
+                                    if(f1bot[contadorMovf1 - 1] == 7){
+                                        f1bot[contadorMovf1 - 1] = lastmovf1;
+                                    }
+                                }
+
+                                if (movimientof1 == 2 || movimientof1 == 3) {
+                                    lastmovf1 = movimientof1;
+                                    f1bot[contadorMovf1] = 7;
+                                    // Cambia la dirección cíclicamente
+                                    updateDirection(contador, movimientof1);
+                                    cout << contador << "----------------------" << endl;
+                                    miraNE = estados[contador].miraNE;
+                                    miraNO = estados[contador].miraNO;
+                                    miraSO = estados[contador].miraSO;
+                                    miraSE = estados[contador].miraSE;
+                                    girando = true;
+                                    contadorMovf1++;
+
+                                } else if (movimientof1 == 1) {
+                                    lastmovf1 = movimientof1;
+                                    f1bot[contadorMovf1] = 7;
+                                    // Mover en la dirección actual
+                                    Estado estado;
+                                    estado.miraNE = miraNE;
+                                    estado.miraNO = miraNO;
+                                    estado.miraSO = miraSO;
+                                    estado.miraSE = miraSE;
+
+                                    move2(targetPosition, moving, estado, xIso, yIso);
+                                    contadorMovf1++;
+                                }else if (movimientof1 == 0) {
+                                    contadorMovf1 = 0;
+                                    contadorMovimientos++;
+                                }
+
+                                // Avanzar en el array de movimientos
+                            }
+                        }else if (movimiento == 6 && currentIteraciones <  counter) {
+                            lastmov = movimiento;
+                            mainbot[contadorMovimientos] = 7;
+
+                            cout<<"bucleoco"<<endl;
+                            if (contadorMovbucle < sizeof(buclebot) / sizeof(buclebot[0]) && moving == false && girando == false) {
+                                if(buclebot[contadorMovbucle] != 7){movimientoBucle = buclebot[contadorMovbucle]; }
+                                if(contadorMovbucle != 0){
+                                    if(buclebot[contadorMovbucle - 1] == 7){
+                                        buclebot[contadorMovbucle - 1] = lastmovbucle;
+                                    }
+                                }
+
+                                if (movimientoBucle == 2 || movimientoBucle == 3) {
+                                    lastmovbucle = movimientoBucle;
+                                    buclebot[contadorMovbucle] = 7;
+                                    // Cambia la dirección cíclicamente
+                                    updateDirection(contador, movimientoBucle);
+                                    cout << contador << "----------------------" << endl;
+                                    miraNE = estados[contador].miraNE;
+                                    miraNO = estados[contador].miraNO;
+                                    miraSO = estados[contador].miraSO;
+                                    miraSE = estados[contador].miraSE;
+                                    girando = true;
+                                    contadorMovbucle++;
+
+                                } else if (movimientoBucle == 1) {
+                                    lastmovbucle = movimientoBucle;
+                                    buclebot[contadorMovbucle] = 7;
+                                    // Mover en la dirección actual
+                                    Estado estado;
+                                    estado.miraNE = miraNE;
+                                    estado.miraNO = miraNO;
+                                    estado.miraSO = miraSO;
+                                    estado.miraSE = miraSE;
+
+                                    move2(targetPosition, moving, estado, xIso, yIso);
+                                    contadorMovbucle++;
+                                }else if (movimientoBucle == 0) {
+                                    contadorMovbucle = 0;
+                                    currentIteraciones++;
+                                }
+
+                                // Avanzar en el array de movimientos
+                            }
+                        }else if (currentIteraciones == counter){
+                            contadorMovimientos++;
+                            currentIteraciones = 0;
+
+                        }else if(movimiento == 0){contadorMovimientos++;}
+
+                        // Avanzar en el array de movimientos
+                        //contadorMovimientos++;
+                    } else if(!moving && !girando){
+                        cout << "Llegue al final del array de movimientos" << endl;
+                        contadorMovimientos = 0;
+                        booliniciar = false;
                     }
                 }
 
-                if (decrementButton.getGlobalBounds().contains(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
-                    if (counter > 0) {
-                        counter--;
-                        numberSprite.setTexture(textures[counter]);
+        
+
+        // Actualizar la animación del sprite
+        if (moving) 
+        {
+            // Verificar colisión con bloques
+            Vector2f newPosition = targetPosition;
+            int posXIso, posYISo;
+            Vector2i indices = calculateGridIndices(newPosition, pos_origin);
+
+            posXIso = indices.x;
+            posYISo = indices.y;
+
+            cout << posXIso << posYISo << endl;
+
+            if (mapas[mapaActual][posXIso][posYISo] == -1) {
+                bloques.clear();
+
+                for (int i = 0; i < gridSize; ++i) {
+                    for (int j = 0; j < gridSize; ++j) {
+                        tiles[i][j] = Sprite(); // Reasignar un sprite por defecto
                     }
                 }
+
+                for (int i = 0; i < gridSize; ++i) {
+                    for (int j = 0; j < gridSize; ++j) {
+                        tiles2d[i][j] = Sprite(); // Reasignar un sprite por defecto
+                    }
+                }
+
+                // Incrementar mapaActual y usar el operador módulo para reiniciar a 0 cuando se alcance el límite
+                mapaActual = (mapaActual + 1) % 5;
+
+                posXIso = 0;
+                posYISo = 0;
+                makibot.setOrigin(12.5f, 50.f);
+                makibot.setPosition(300.f, 150.f + yIso / 2.f);
+
+                // Actualizar targetPosition a la nueva posición inicial
+                targetPosition = makibot.getPosition();
+
+                crearSpritesPiso(tiles, mapas[mapaActual], texturaLozaAzul, texturaPiso);
+                crearSpritesBloques(bloques, mapas[mapaActual], texturaBloque);
+                configurarSprites(tiles2d, matrices2d[mapaActual], texturaBloque2d, texturaLozaAzul2D, texturaPiso2d);
+
+                // Detener movimiento
+                moving = false;
+            }
+
+            
+            if (!(posXIso >= 0 && posXIso < gridSize && posYISo >= 0 && posYISo < gridSize) ||
+                    (mapas[mapaActual][posXIso][posYISo] != 0 && mapas[mapaActual][posXIso][posYISo] != -1))
+            {
+                moving = false;
+                targetPosition = makibot.getPosition();
+            }else
+            {
+                if (animationClock.getElapsedTime().asSeconds() > animationSpeed)
+                {
+                    if (miraNE || miraNO)
+                    {
+                        currentFrame = (currentFrame + 1) % framesB.size();
+                        makibot.setTextureRect(framesB[currentFrame]);
+                        cout << "arriba" << endl;
+                    }
+                    else if (miraSO || miraSE)
+                    {
+                        currentFrame = (currentFrame + 1) % framesF.size();
+                        makibot.setTextureRect(framesF[currentFrame]);
+                    }
+
+                    animationClock.restart();
+                }
+
+                // movimeinto del profesor
+                Vector2f currentPosition = makibot.getPosition();
+                moveRobot(makibot, targetPosition, currentPosition, xIso, yIso);
+
+                // Detener el movimiento al alcanzar el objetivo
+
+                stopMovement(makibot, targetPosition, makibot.getPosition(), currentFrame, miraNE, miraNO, miraSO, miraSE, moving, framesB, framesF);
+                // posicion de makibot2D
+                makibot2D.setPosition(507.5f + 15.f * posXIso, 407.4f + 15.f * posYISo);
+
+                // mapa 2D , se verifica la posicion de los bloques y el makibot
+                updateBlocks(bloques2, mapas[mapaActual], gridSize, texturaBloque, lado, posXIso, posYISo);
+            }
+            if (miraNE)
+                makibot.setScale(1.f, 1.f);
+            else if (miraNO)
+                makibot.setScale(-1.f, 1.f);
+            else if (miraSO)
+                makibot.setScale(-1.f, 1.f);
+            else if (miraSE)
+                makibot.setScale(1.f, 1.f);
+        }else if(girando)
+        {
+            if (animationClock.getElapsedTime().asSeconds() > 1.5){
+                if (miraNE || miraNO)
+                {
+                    makibot.setTextureRect(framesB[currentFrame]);
+                }
+                else if (miraSO || miraSE)
+                {
+                    makibot.setTextureRect(framesF[currentFrame]);
+                }
+                if (miraNE)
+                    makibot.setScale(1.f, 1.f);
+                else if (miraNO)
+                    makibot.setScale(-1.f, 1.f);
+                else if (miraSO)
+                    makibot.setScale(-1.f, 1.f);
+                else if (miraSE)
+                    makibot.setScale(1.f, 1.f);
+                girando = false;
+
+                animationClock.restart();
             }
         }
+        
 
+        
 
-        // Procesar interacción del ratón
-        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-        for (auto& button : buttons) {
-            sf::FloatRect bounds = button.sprite.getGlobalBounds();
-            if (bounds.contains(static_cast<sf::Vector2f>(mousePos))) {
-                if (!button.isHovered) {
-                    button.sprite.setScale(BUTTON_SCALE, BUTTON_SCALE);
-                    button.isHovered = true;
-                }
-
-
-                else if (event.type == sf::Event::MouseButtonPressed) {
-                    if (event.mouseButton.button == sf::Mouse::Left) {
-                        clicDerechoPresionado = true;
-                    }
-                } else if (event.type == sf::Event::MouseButtonReleased) {
-                    if (event.mouseButton.button == sf::Mouse::Left && clicDerechoPresionado == true ) {
-                        if(boolmain){
-                            InsertarInstru(mainbot,12,button.id );
-                            imprimirArray(mainbot,12);
-                        }
-                        if(boolf1){
-                            InsertarInstru(f1bot,8,button.id );
-                            imprimirArray(f1bot,8);
-                        }
-                        if(boolbucle){
-                            InsertarInstru(buclebot,4,button.id );
-                            imprimirArray(buclebot,4);
-                        }
-                        clicDerechoPresionado = false;
-                    }
-                }
-                
-
-            } else {
-                if (button.isHovered) {
-                    button.sprite.setScale(1.f, 1.f);
-                    button.isHovered = false;
-                }
+        window.clear(grisOscuro);
+        // dibujar piso 2d
+        for (int i = 0; i < gridSize; ++i)
+        {
+            for (int j = 0; j < gridSize; ++j)
+            {
+                window.draw(tiles2d[i][j]);
             }
+        }
+        // Dibujar el piso y los bloques
+        for (int i = 0; i < gridSize; ++i)
+        {
+            for (int j = 0; j < gridSize; ++j)
+            {
+                window.draw(tiles[i][j], isoTransform);
+            }
+        }
+        for (auto &bloque : bloques)
+        {
+            window.draw(bloque, isoTransform);
+        }
+
+        window.draw(makibot);
+        window.draw(makibot2D);
+
+        for (auto &bloque : bloques2)
+        {
+            window.draw(bloque, isoTransform);
         }
         scaleOnHover(iniciarButton, window);
         
-        scaleOnHover(incrementButton, window);
-        scaleOnHover(decrementButton, window);
+                scaleOnHover(incrementButton, window);
+                scaleOnHover(decrementButton, window);
 
-        window.clear();
-        window.draw(iniciarButton);
-        window.draw(numberSprite);
-        window.draw(incrementButton);
-        window.draw(decrementButton);
-        for (const auto& button : buttons) {
-            window.draw(button.sprite);
-        }
-        dibujarImagenes(window, buttonTexture, mainbot, sizeof(mainbot) / sizeof(mainbot[0]), 720, 100,event, boolmain);
-        dibujarImagenes(window, buttonTexture, f1bot, sizeof(f1bot) / sizeof(f1bot[0]), 720, 320,event, boolf1);
-        dibujarImagenes(window, buttonTexture, buclebot, sizeof(buclebot) / sizeof(buclebot[0]), 720, 470,event, boolbucle);
-        
+                window.draw(iniciarButton);
+                window.draw(numberSprite);
+                window.draw(incrementButton);
+                window.draw(decrementButton);
+                for (const auto& button : buttons) {
+                    window.draw(button.sprite);
+                }
+                dibujarImagenes(window, buttonTexture, mainbot, sizeof(mainbot) / sizeof(mainbot[0]), 720, 100,event, boolmain);
+                dibujarImagenes(window, buttonTexture, f1bot, sizeof(f1bot) / sizeof(f1bot[0]), 720, 320,event, boolf1);
+                dibujarImagenes(window, buttonTexture, buclebot, sizeof(buclebot) / sizeof(buclebot[0]), 720, 470,event, boolbucle);
+                
+
         window.display();
     }
 
