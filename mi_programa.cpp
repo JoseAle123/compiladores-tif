@@ -819,6 +819,7 @@ int main()
                 {
                     if (mainbot[contadorMovimientos - 1] == 7)
                     {
+                        cout << "cambio "<< endl ;
                         mainbot[contadorMovimientos - 1] = lastmov;
                     }
                 }
@@ -909,6 +910,11 @@ int main()
 
                         // Avanzar en el array de movimientos
                     }
+                    else if (contadorMovf1 >= 8){
+                        f1bot[contadorMovf1 - 1] = lastmovf1;
+                        contadorMovf1 = 0;
+                        contadorMovimientos++;
+                    }
                 }
                 else if (movimiento == 6 && currentIteraciones < counter)
                 {
@@ -963,18 +969,28 @@ int main()
                             contadorMovbucle = 0;
                             currentIteraciones++;
                         }
+                        
 
                         // Avanzar en el array de movimientos
                     }
+                    else if (contadorMovbucle >= 4){
+                        buclebot[contadorMovbucle - 1] = lastmovbucle;
+                        contadorMovbucle = 0;
+                        currentIteraciones++;
+                    }
                 }
-                else if (currentIteraciones == counter)
+                
+                else if (currentIteraciones = counter)
                 {
                     contadorMovimientos++;
                     currentIteraciones = 0;
                 }
                 else if (movimiento == 0)
                 {
+                    cout << "Llegue al final del array de movimientos" << endl;
                     contadorMovimientos++;
+                    contadorMovimientos = 0;
+                    booliniciar = false;
                 }
 
                 // Avanzar en el array de movimientos
@@ -983,6 +999,7 @@ int main()
             else if (!moving && !girando && !colisionando)
             {
                 cout << "Llegue al final del array de movimientos" << endl;
+                mainbot[contadorMovimientos - 1] = lastmov;
                 contadorMovimientos = 0;
                 booliniciar = false;
             }
