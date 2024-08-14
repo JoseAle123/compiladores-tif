@@ -328,7 +328,7 @@ void configurarSprites(sf::Sprite tiles2d[][gridSize], const int matriz2D[][grid
             {
                 tiles2d[i][j].setTexture(texturaPiso2d);
             }
-            tiles2d[i][j].setPosition(500 + i * 15, 400 + j * 15);
+            tiles2d[i][j].setPosition(50 + i * 15, 40 + j * 15);
         }
     }
 }
@@ -611,7 +611,7 @@ int main()
     makibot2D.setRadius(5.f);
     makibot2D.setFillColor(Color::White);
     makibot2D.setOrigin(makibot2D.getRadius(), makibot2D.getRadius());
-    makibot2D.setPosition(507.5f, 407.5f);
+    makibot2D.setPosition(57.5f, 47.5f);
 
     // Cargar la textura del punto final del mapa2D
     Texture texturaLozaAzul2D;
@@ -624,11 +624,11 @@ int main()
     Sprite tiles2d[gridSize][gridSize];
     configurarSprites(tiles2d, matrices2d[mapaActual], texturaBloque2d, texturaLozaAzul2D, texturaPiso2d);
 
-    const int frameWidth = 25;
-    const int frameHeight = 50;
+    const int frameWidth = 40;
+    const int frameHeight = 30;
     // SPRITES FRONTAL
     Texture spriteMaki;
-    if (!spriteMaki.loadFromFile("images/sprite_makibot.png"))
+    if (!spriteMaki.loadFromFile("images/sprite_carritos.png"))
     {
         return -1;
     }
@@ -654,8 +654,8 @@ int main()
     IntRect focoB = IntRect(3 * frameWidth, frameHeight, frameWidth, frameHeight);
 
     // Ajustar la posición inicial del sprite para dibujarse desde la parte inferior
-    makibot.setOrigin(12.5f, 50.f);
-    makibot.setPosition(300.f, 150.f + yIso / 2.f);
+    makibot.setOrigin(20.0f, 30.f);
+    makibot.setPosition(300.f, 160.f + yIso / 2.f);
 
     // primera aparicion del makibot
     makibot.setTextureRect(framesF[0]);
@@ -1041,8 +1041,8 @@ int main()
                 }
                 contador = 0;
                 cout << "hhhhh" << endl;
-                makibot.setOrigin(12.5f, 50.f);
-                makibot.setPosition(300.f, 150.f + yIso / 2.f);
+                makibot.setOrigin(20.f, 30.f);
+                makibot.setPosition(300.f, 160.f + yIso / 2.f);
 
                 // Actualizar targetPosition a la nueva posición inicial
                 targetPosition = makibot.getPosition();
@@ -1091,7 +1091,7 @@ int main()
 
                     stopMovement(makibot, targetPosition, makibot.getPosition(), currentFrame, miraNE, miraNO, miraSO, miraSE, moving, framesB, framesF);
                     // posicion de makibot2D
-                    makibot2D.setPosition(507.5f + 15.f * posXIso, 407.4f + 15.f * posYISo);
+                    makibot2D.setPosition(57.5f + 15.f * posXIso, 47.4f + 15.f * posYISo);
 
                     // mapa 2D , se verifica la posicion de los bloques y el makibot
                     updateBlocks(bloques2, mapas[mapaActual], gridSize, texturaBloque, lado, posXIso, posYISo);
